@@ -5,13 +5,22 @@ class LayerConv extends Layer {
 
   int getNumberWeights() { return 0; }
 
-  LayerConv() { }
-
-  void initWeights(Vec weights, Random random) {
-
-  }
+  //LayerConv() { }
 
   LayerConv(int[] inputDims, int[] filterDims, int[] outputDims) {
+    super(countTensorElements(inputDims), countTensorElements(outputDims));
+  }
+
+  /// Counts the number of inputs and outputs
+  private static int countTensorElements(int[] dims) {
+    int n = 1;
+    for(int i = 0; i < dims.length; ++i) {
+      n *= dims[i];
+    }
+    return n;
+  }
+
+  void initWeights(Vec weights, Random random) {
 
   }
 
@@ -20,7 +29,7 @@ class LayerConv extends Layer {
   }
 
   Vec backProp(Vec weights, Vec prevBlame) {
-
+    return new Vec(1);
   }
 
   void updateGradient(Vec x, Vec gradient) {
