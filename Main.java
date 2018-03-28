@@ -317,10 +317,58 @@ class Main
 
 	}
 
+	public static void testData() {
+		Random r = new Random(123456);
+
+		NeuralNet nn = new NeuralNet(r);
+		nn.layers.add(new LayerLinear(1, 2));
+		nn.layers.add(new LayerTanh(2));
+		nn.layers.add(new LayerLinear(2, 1));
+
+		//nn.initWeights();
+
+		double[] w = {0.1, 0.2, 0.3, 0.4, 0.1, 0.2, 0.3};
+		nn.weights = new Vec(w);
+		nn.gradient = new Vec(nn.weights.size());
+		nn.gradient.fill(0.0);
+
+		double[] x = {0.3};
+		Matrix f = new Matrix(0, 1);
+		f.takeRow(x);
+
+		double[] t = {0.7};
+		Matrix l = new Matrix(0, 1);
+		l.takeRow(t);
+
+		for(int i = 0; i < 1; ++i) {
+			int[] index = {0};
+
+			System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+			System.out.println("EPOCH: " + i + '\n');
+
+			nn.train(f, l, index, 1, 0.0);
+
+			Vec o = nn.predict(f.row(0));
+			System.out.println("=======" + '\n' + "final output: " + o);
+
+			System.out.println("after weights:");
+		}
+		System.out.println("final weights: " + nn.weights);
+
+		System.out.println("Final out: " + nn.predict(f.row(0)));
+
+	}
+
+	public static void testConv() {
+		
+	}
+
 	public static void main(String[] args)
 	{
 		//newTest();
-		testNomCat();
+		//testNomCat();
+		//testData();
+
 
 	}
 }

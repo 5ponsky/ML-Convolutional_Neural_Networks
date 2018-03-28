@@ -60,8 +60,7 @@ public class NeuralNet extends SupervisedLearner {
     int pos = weights.size();
     for(int i = layers.size()-1; i >= 0; --i) {
       Layer l = layers.get(i);
-      //l.debug();
-      //prevBlame = new Vec(l.inputs);
+      l.debug();
 
       int weightsChunk = l.getNumberWeights();
       pos -= weightsChunk;
@@ -85,28 +84,43 @@ public class NeuralNet extends SupervisedLearner {
     }
   }
 
-  // void refineWeights(Vec x, Vec y, Vec weights, double learning_rate, Training type) {
-  //
-  //   if(Training.STOCHASTIC == type) {
-  //     gradient.fill(0.0);
-  //   } else if(Training.MOMENTUM == type) {
-  //     gradient.scale(0.9);
-  //   }
-  //
-  //   predict(x);
-  //
-  //   // Compute the blame on each layer
-  //   backProp(y);
-  //
-  //   // Compute the gradient
-  //   updateGradient(x);
-  //
-  //   // Adjust the weights per the learning_rate
-  //   this.weights.addScaled(learning_rate, gradient);
-  // }
+  /// This is for testing/estimating if the gradient is correct
+  void centralDifference(Vec x) {
+    Vec cd_gradient = new Vec(gradient);
 
-  void refineWeights(double learning_rate) {
-    weights.addScaled(learning_rate, gradient);
+
+    // Produce a vector for the constant h
+    double h = 0.00001;
+    Vec spacing = new Vec(x.size());
+    spacing.fill(h);
+
+    // Vectors for the left and right part of the central difference
+    Vec left = new Vec(x);
+    left.addScaled(0.5, spacing);
+    Vec right = new Vec(x);
+    right.addScaled(-0.5, spacing);
+
+    // Calculate the central difference
+    int pos = 0;
+    for(int i = 0; i < layers.size(); ++i) {
+      Layer l = layers.get(i);
+      int weightsChunk = l.getNumberWeights();
+      Vec v = new Vec(cd_gradient, pos, weightsChunk);
+
+      // Compute the gradient via central difference
+      l.activate(v, left);
+      left = new Vec(l.activation);
+
+      l.activate(v, right);
+      right = new Vec(l.activation);
+
+      left.addScaled(-1, right);
+      v.add(left);
+
+      pos += weightsChunk;
+    }
+
+
   }
 
   Vec predict(Vec in) {
@@ -123,12 +137,20 @@ public class NeuralNet extends SupervisedLearner {
     return (layers.get(layers.size()-1).activation);
   }
 
+  /// Update the weights
+  void refineWeights(double learning_rate) {
+    weights.addScaled(learning_rate, gradient);
+  }
+
+  /// Trains with a set of scrambled indices to improve efficiency
   void train(Matrix features, Matrix labels, int[] indices, int batch_size, double momentum) {
     if(batch_size < 1)
       throw new IllegalArgumentException("Batch Size is invalid!");
+    if(momentum < 0.0)
+      throw new IllegalArgumentException("Momentum < 0");
 
     // How many patterns/mini-batches should we train on before testing?
-    final int cutoff = 1;
+    final int cutoff = features.rows();
 
     Vec in, target;
     // We want to check if we have iterated over all rows
@@ -166,7 +188,6 @@ public class NeuralNet extends SupervisedLearner {
 
       scrambleIndices(random, indices, null);
     }
-
   }
 
 }

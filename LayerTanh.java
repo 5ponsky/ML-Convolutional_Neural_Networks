@@ -41,7 +41,7 @@ public class LayerTanh extends Layer {
   } // Tanh contains no weights so this is empty
 
   void debug() {
-    System.out.println("---LayerLinear---");
+    System.out.println("---LayerTanh---");
     System.out.println("Weights: " + getNumberWeights());
     System.out.println("activation: ");
     System.out.println(activation);
