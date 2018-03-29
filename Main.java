@@ -322,7 +322,7 @@ class Main
 
 		NeuralNet nn = new NeuralNet(r);
 		nn.layers.add(new LayerLinear(1, 2));
-		nn.layers.add(new LayerTanh(2));
+		nn.layers.add(new LayerLeakyRectifier(2));
 		nn.layers.add(new LayerLinear(2, 1));
 
 		//nn.initWeights();
@@ -340,7 +340,7 @@ class Main
 		Matrix l = new Matrix(0, 1);
 		l.takeRow(t);
 
-		for(int i = 0; i < 1; ++i) {
+		for(int i = 0; i < 500; ++i) {
 			int[] index = {0};
 
 			System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
@@ -364,14 +364,14 @@ class Main
 
 		int[] in = {3, 3};
 		int[] fi = {2, 2};
-		int[] ou = {3, 3};
+		int[] ou = {4, 4};
 		LayerConv lc = new LayerConv(in, fi, ou);
 
-		Vec w = new Vec(3*3);
+		Vec w = new Vec(2*2);
 		lc.initWeights(w, r);
 
 		Vec inp = new Vec(3*3);
-		Vec out = new Vec(3*3);
+		Vec out = new Vec(4*4);
 
 		for(int i = 0; i < inp.size(); ++i) {
 			inp.set(i, i);
@@ -387,10 +387,8 @@ class Main
 
 	public static void main(String[] args)
 	{
-		testConv();
-		//newTest();
-		//testNomCat();
-		//testData();
+		//testConv();
+		testData();
 
 
 	}

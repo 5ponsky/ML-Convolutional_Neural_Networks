@@ -29,21 +29,8 @@ class LayerConv extends Layer {
     int totalElements = countTensorElements(filterDims);
 
     for(int i = 0; i < totalElements; ++i) {
-      weights.set(i, random.nextGaussian());
+      weights.set(i, random.nextGaussian() / totalElements);
     }
-
-    // Tensors are seen as LxWxH, and iterate them as such
-    // int pos = 0;
-    // for(int i = 0; i < filterDims.length; ++i) {
-    //   int dim = filterDims[i];
-    //   System.out.println(dim);
-    //   Vec v = new Vec(weights, pos, dim);
-    //
-    //   for(int j = 0; j < dim; ++j) {
-    //     v.set(j, random.nextGaussian());
-    //   }
-    //   pos += dim;
-    // }
   }
 
   void activate(Vec weights, Vec x) {

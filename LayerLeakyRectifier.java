@@ -2,35 +2,52 @@ import java.util.Random;
 
 
 class LayerLeakyRectifier extends Layer {
+  double scale = 0.01;
 
+  int getNumberWeights() { return 0; }
 
-  LayerLeakyRectifier() {
-
-  }
-
-  void initWeights(Vec weights, Random random) {
-
+  LayerLeakyRectifier(int outputs) {
+    super(outputs, outputs);
   }
 
   void activate(Vec weights, Vec x) {
-
+    for(int i = 0; i < outputs; ++i) {
+      double val = x.get(i);
+      activation.set(i, val > 0 ? scale * val : val);
+    }
   }
 
   Vec backProp(Vec weights, Vec prevBlame) {
-    return new Vec(1);
+    if(activation.size() != blame.size())
+      throw new IllegalArgumentException("derivative problem, vector size mismatch");
+
+    Vec nextBlame = new Vec(prevBlame.size());
+
+    blame.fill(0.0);
+    blame.add(prevBlame);
+
+    for(int i = 0; i < inputs; ++i) {
+      double val = prevBlame.get(i);
+      double derivative = (val > 0 ? scale : 1);
+      nextBlame.set(i, derivative);
+    }
+
+    return nextBlame;
   }
 
   void updateGradient(Vec x, Vec gradient) {
+  } // Leaky Rectifier has no weights
 
-  }
+  void initWeights(Vec weights, Random random) {
+  } // Leaky Rectifier has no weights
 
 
   void debug() {
     System.out.println("---LayerLeakyRectifier---");
-    //System.out.println("Weights: " + getNumberWeights());
+    System.out.println("Weights: " + getNumberWeights());
     System.out.println("activation: ");
-    //System.out.println(activation);
+    System.out.println(activation);
     System.out.println("blame:");
-    //System.out.println(blame);
+    System.out.println(blame);
   }
 }

@@ -1,6 +1,7 @@
 /// A tensor class.
 class Tensor extends Vec {
 	int[] dims;
+	int numElements;
 
 	/// General-purpose constructor. Example:
 	/// Tensor t(v, {5, 7, 3});
@@ -16,6 +17,9 @@ class Tensor extends Vec {
 
 		if(tot != vals.size())
 			throw new RuntimeException("Mismatching sizes. Vec has " + Integer.toString(vals.size()) + ", Tensor has " + Integer.toString(tot));
+
+		// Store the total number of elements
+		numElements = tot;
 	}
 
 	/// Copy constructor. Copies the dimensions. Wraps the same vector.
@@ -24,6 +28,8 @@ class Tensor extends Vec {
 		dims = new int[copyMe.dims.length];
 		for(int i = 0; i < copyMe.dims.length; i++)
 			dims[i] = copyMe.dims[i];
+
+		numElements = copyMe.numElements;
 	}
 
 	/// The result is added to the existing contents of out. It does not replace the existing contents of out.
@@ -31,6 +37,12 @@ class Tensor extends Vec {
 	/// filter is the filter to convolve with in.
 	/// If flipFilter is true, then the filter is flipped in all dimensions.
 	static void convolve(Tensor in, Tensor filter, Tensor out, boolean flipFilter, int stride) {
+		if(out.numElements % filter.numElements != 0) {
+			throw new RuntimeException("output size: " + out.numElements
+				+ " / filter: " + filter.numElements + " does not have remainder 0!");
+		}
+
+
 		// Precompute some values
 		int dc = in.dims.length;
 		if(dc != filter.dims.length)
