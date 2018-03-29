@@ -2,13 +2,17 @@ import java.util.Random;
 
 
 class LayerConv extends Layer {
+  int[] inputDims, filterDims, outputDims;
+  Vec filter;
 
-  int getNumberWeights() { return 0; }
+  int getNumberWeights() { return 0; } // Unused for now?
 
-  //LayerConv() { }
-
+  /// Constructor
   LayerConv(int[] inputDims, int[] filterDims, int[] outputDims) {
     super(countTensorElements(inputDims), countTensorElements(outputDims));
+    this.inputDims = inputDims;
+    this.filterDims = filterDims;
+    this.outputDims = outputDims;
   }
 
   /// Counts the number of inputs and outputs
@@ -20,8 +24,26 @@ class LayerConv extends Layer {
     return n;
   }
 
+  /// Initialize the filter weights
   void initWeights(Vec weights, Random random) {
+    int totalElements = countTensorElements(filterDims);
 
+    for(int i = 0; i < totalElements; ++i) {
+      weights.set(i, random.nextGaussian());
+    }
+
+    // Tensors are seen as LxWxH, and iterate them as such
+    // int pos = 0;
+    // for(int i = 0; i < filterDims.length; ++i) {
+    //   int dim = filterDims[i];
+    //   System.out.println(dim);
+    //   Vec v = new Vec(weights, pos, dim);
+    //
+    //   for(int j = 0; j < dim; ++j) {
+    //     v.set(j, random.nextGaussian());
+    //   }
+    //   pos += dim;
+    // }
   }
 
   void activate(Vec weights, Vec x) {
@@ -43,9 +65,9 @@ class LayerConv extends Layer {
     System.out.println("---LayerConv---");
     //System.out.println("Weights: " + getNumberWeights());
     System.out.println("activation: ");
-    //System.out.println(activation);
+    System.out.println(activation);
     System.out.println("blame:");
-    //System.out.println(blame);
+    System.out.println(blame);
   }
 
 }

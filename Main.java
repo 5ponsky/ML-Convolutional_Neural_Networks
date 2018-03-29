@@ -360,11 +360,27 @@ class Main
 	}
 
 	public static void testConv() {
-		
+		Random r = new Random(123456);
+
+		int[] in = {2, 3, 4};
+		int[] fi = {3, 5, 4};
+		int[] ou = {7, 8, 3};
+		LayerConv lc = new LayerConv(in, fi, ou);
+
+		Vec w = new Vec(3*5*4);
+		lc.initWeights(w, r);
+
+		Vec inp = new Vec(2*3*4);
+		Vec out = new Vec(7*8*3);
+
+
+
+		//Tensor.convolve(inp, w, out, false, 1);
 	}
 
 	public static void main(String[] args)
 	{
+		testConv();
 		//newTest();
 		//testNomCat();
 		//testData();

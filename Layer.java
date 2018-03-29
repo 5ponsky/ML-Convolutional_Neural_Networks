@@ -17,11 +17,6 @@ abstract class Layer
 	Vec getActivation() { return activation; }
 	Vec getBlame() { return blame; }
 
-	// Deep copy
-	void setBlame(Vec blame) {
-		this.blame = new Vec(blame);
-	}
-
 	abstract void activate(Vec weights, Vec x);
 
 	abstract Vec backProp(Vec weights, Vec prevBlame);
