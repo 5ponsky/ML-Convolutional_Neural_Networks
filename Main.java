@@ -362,20 +362,27 @@ class Main
 	public static void testConv() {
 		Random r = new Random(123456);
 
-		int[] in = {2, 3, 4};
-		int[] fi = {3, 5, 4};
-		int[] ou = {7, 8, 3};
+		int[] in = {3, 3};
+		int[] fi = {2, 2};
+		int[] ou = {3, 3};
 		LayerConv lc = new LayerConv(in, fi, ou);
 
-		Vec w = new Vec(3*5*4);
+		Vec w = new Vec(3*3);
 		lc.initWeights(w, r);
 
-		Vec inp = new Vec(2*3*4);
-		Vec out = new Vec(7*8*3);
+		Vec inp = new Vec(3*3);
+		Vec out = new Vec(3*3);
+
+		for(int i = 0; i < inp.size(); ++i) {
+			inp.set(i, i);
+		}
+
+		Tensor input = new Tensor(inp, in);
+		Tensor output = new Tensor(out, ou);
+		Tensor filter = new Tensor(w, fi);
 
 
-
-		//Tensor.convolve(inp, w, out, false, 1);
+		Tensor.convolve(input, filter, output, false, 1);
 	}
 
 	public static void main(String[] args)
