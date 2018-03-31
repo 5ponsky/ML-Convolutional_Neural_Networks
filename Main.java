@@ -361,28 +361,21 @@ class Main
 
 	public static void testConv() {
 		Random r = new Random(123456);
-
-		int[] in = {3, 3};
-		int[] fi = {2, 2};
-		int[] ou = {4, 4};
-		LayerConv lc = new LayerConv(in, fi, ou);
-
-		Vec w = new Vec(2*2);
-		lc.initWeights(w, r);
-
-		Vec inp = new Vec(3*3);
-		Vec out = new Vec(4*4);
-
-		for(int i = 0; i < inp.size(); ++i) {
-			inp.set(i, i);
-		}
-
-		Tensor input = new Tensor(inp, in);
-		Tensor output = new Tensor(out, ou);
-		Tensor filter = new Tensor(w, fi);
+		NeuralNet nn = new NeuralNet(r);
+		nn.layers.add(new LayerConv(new int[]{5,5}, new int[]{2,2}, new int[]{4,4}));
+		nn.layers.add(new LayerLeakyRectifier(4));
 
 
-		Tensor.convolve(input, filter, output, false, 1);
+	}
+
+	public static void debugSpew() {
+		Random r = new Random(123456);
+		NeuralNet nn = new NeuralNet(r);
+		nn.layers.add(new LayerConv(new int[]{4, 4}, new int[]{3, 3, 2},
+			new int[]{4, 4, 2}));
+		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 2));
+		nn.layers.add(new LayerMaxPooling2D(4, 4, 2));
+
 	}
 
 	public static void main(String[] args)

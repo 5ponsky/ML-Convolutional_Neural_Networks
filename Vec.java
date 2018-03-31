@@ -197,4 +197,33 @@ public class Vec {
 		}
 		return d;
 	}
+
+	public double findMin() {
+		double min = vals[0];
+		for(int i = 0; i < vals.length; ++i) {
+			if(vals[i] < min)
+				min = vals[i];
+		}
+		return min;
+	}
+
+	public double findMax() {
+		double max = vals[0];
+		for(int i = 0; i < vals.length; ++i) {
+			if(vals[i] > max)
+				max = vals[i];
+		}
+		return max;
+	}
+
+	public double findMean() {
+		double sum = 0;
+		for(int i = 0; i < vals.length; ++i) {
+			sum += vals[i];
+		}
+
+		return (sum / vals.length);
+	}
+
+	
 }
