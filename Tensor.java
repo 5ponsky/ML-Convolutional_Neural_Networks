@@ -37,18 +37,18 @@ class Tensor extends Vec {
 	/// filter is the filter to convolve with in.
 	/// If flipFilter is true, then the filter is flipped in all dimensions.
 	static void convolve(Tensor in, Tensor filter, Tensor out, boolean flipFilter, int stride) {
-		if(out.numElements % filter.numElements != 0) {
-			throw new RuntimeException("output size: " + out.numElements
-				+ " / filter: " + filter.numElements + " does not have remainder 0!");
-		}
+		// if(out.numElements % filter.numElements != 0) {
+		// 	throw new RuntimeException("output size: " + out.numElements
+		// 		+ " / filter: " + filter.numElements + " does not have remainder 0!");
+		// }
 
 
 		// Precompute some values
 		int dc = in.dims.length;
 		if(dc != filter.dims.length)
-			throw new RuntimeException("Expected tensors with the same number of dimensions");
+			throw new RuntimeException("input # dims: " + dc + ". filter # dims: " + filter.dims.length);
 		if(dc != out.dims.length)
-			throw new RuntimeException("Expected tensors with the same number of dimensions");
+			throw new RuntimeException("input # dims: " + dc + ". output # dims: " + out.dims.length);
 		int[] kinner = new int[dc];
 		int[] kouter = new int[dc];
 		int[] stepInner = new int[dc];

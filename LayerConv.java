@@ -3,18 +3,39 @@ import java.util.Random;
 
 class LayerConv extends Layer {
   int[] inputDims, filterDims, outputDims;
-  int filterWeights;
+  int filterWeights, totalBiases, filterWidth, filterHeight, filterSize;
   Vec filter;
 
-  int getNumberWeights() { return filterWeights; } // Unused for now?
+  int getNumberWeights() { return filterWeights; }
 
   /// Constructor
   LayerConv(int[] inputDims, int[] filterDims, int[] outputDims) {
     super(countTensorElements(inputDims), countTensorElements(outputDims));
-    filterWeights = countTensorElements(filterDims);
     this.inputDims = inputDims;
     this.filterDims = filterDims;
     this.outputDims = outputDims;
+
+    // Since we can represent any n-tensor as endless series of
+    // nxm matrices, we need to save the first 2 dimensions of the filter
+    filterWidth = filterDims[0];
+    filterHeight = filterDims[1];
+    filterSize = filterWidth * filterHeight;
+
+    // Get the total number of tensor elements
+    filterWeights = countTensorElements(filterDims);
+
+    // Calculate the bias terms for the filter
+    if(filterDims.length < 3) { // Tensor has a depth of one
+      totalBiases = 1;
+      filterWeights += totalBiases;
+    } else {
+      // Each tensor "plane" gets a single bias value
+      totalBiases = 1;
+      for(int i = 2; i < filterDims.length; ++i) {
+        totalBiases *= filterDims[i];
+      }
+      filterWeights += totalBiases;
+    }
   }
 
   /// Counts the number of inputs and outputs
@@ -35,10 +56,36 @@ class LayerConv extends Layer {
 
   void activate(Vec weights, Vec x) {
     Tensor in = new Tensor(x, inputDims);
-    Tensor filter = new Tensor(weights, filterDims);
     Tensor out = new Tensor(activation, outputDims);
 
+    // Strip the biases off of the weights
+    Vec biases = new Vec(weights, 0, totalBiases);
+    Vec filters = new Vec(weights, totalBiases, filterWeights-totalBiases);
+    Tensor filter = new Tensor(filters, filterDims);
+
+    System.out.println(filters.size());
+
+
     Tensor.convolve(in, filter, out, false, 1);
+
+    // Vec to add bias to each tensor
+    Vec bias = new Vec(filterSize);
+
+    int pos = 0;
+    for(int i = 0; i < biases.size(); ++i) {
+
+      // Get a single filter
+      Vec f = new Vec(out, pos, filterSize);
+      System.out.println(f);
+
+      // fill the bias vector with a bias value
+      double b = biases.get(i);
+      bias.fill(b);
+
+      f.add(bias);
+
+      pos += filterSize;
+    }
   }
 
   Vec backProp(Vec weights, Vec prevBlame) {

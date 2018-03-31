@@ -360,11 +360,20 @@ class Main
 	}
 
 	public static void testConv() {
-		Random r = new Random(123456);
-		NeuralNet nn = new NeuralNet(r);
-		nn.layers.add(new LayerConv(new int[]{5,5}, new int[]{2,2}, new int[]{4,4}));
-		nn.layers.add(new LayerLeakyRectifier(4));
+		int[] in = {4,4};
+		int[] fi = {3,3,2};
+		int[] ou = {4,4,2};
+		LayerConv lc = new LayerConv(in, fi, ou);
 
+		Vec inp = new Vec(4*4);
+		Vec fil = new Vec(3*3*2);
+		Vec out = new Vec(4*4*2);
+
+		Tensor input = new Tensor(inp, in);
+		Tensor filter = new Tensor(fil, fi);
+		Tensor output = new Tensor(out, ou);
+
+		Tensor.convolve(input, filter, output, false, 1);
 
 	}
 
@@ -373,16 +382,43 @@ class Main
 		NeuralNet nn = new NeuralNet(r);
 		nn.layers.add(new LayerConv(new int[]{4, 4}, new int[]{3, 3, 2},
 			new int[]{4, 4, 2}));
-		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 2));
-		nn.layers.add(new LayerMaxPooling2D(4, 4, 2));
+		//nn.layers.add(new LayerLeakyRectifier(4 * 4 * 2));
+		//nn.layers.add(new LayerMaxPooling2D(4, 4, 2));
 
+		double[] w = {
+			0,							// bias #1
+			0.01,0.02,0.03, // filter #1
+			0.04,0.05,0.06,
+			0.07,0.08,0.09,
+
+			0.1,            // bias #2
+			0.11,0.12,0.13, // filter #2
+			0.14,0.15,0.16,
+			0.17,0.18,0.19
+		};
+		nn.weights = new Vec(w);
+		nn.gradient = new Vec(nn.weights.size());
+		nn.gradient.fill(0.0);
+
+		double[] in = {
+			0,0.1,0.2,0.3,
+			0.4,0.5,0.6,0.7,
+			0.8,0.9,1,1.1,
+			1.2,1.3,1.4,1.5
+		};
+		Vec input = new Vec(in);
+
+		nn.layers.get(0).activate(nn.weights, input);
+
+		System.out.println("weights:\n" + nn.layers.get(0).activation);
+		System.out.println("activation:\n" + nn.layers.get(0).activation);
 	}
 
 	public static void main(String[] args)
 	{
-		//testConv();
-		testData();
-
+		testConv();
+		// testData();
+		// debugSpew();
 
 	}
 }
