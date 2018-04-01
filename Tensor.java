@@ -32,6 +32,120 @@ class Tensor extends Vec {
 		numElements = copyMe.numElements;
 	}
 
+	/// This is pretty expensive just to print the dims
+	void printDims() {
+		String out = "Dims: ";
+		for(int i = 0; i < this.dims.length; ++i) {
+			out += this.dims[i] + ", ";
+		}
+		System.out.println(out);
+	}
+
+	/// Wraps the original convolve function to handle tensors of different dimensions
+	static void convolve(Tensor in, Tensor filter, Tensor out, boolean flipFilter) {
+		// neccesary values for the output tensor, will be needed in both cases
+		int extraOutputDims = 0;
+		int outputSize = 0;
+		int[] reducedOutput;
+
+		// if the tensors differ by some number of dimensions
+		int extraInputDims = 0;
+		int inputSize = 0;
+		int[] reducedInput;
+
+		int extraFilterDims = 0;
+		int filterSize = 0;
+		int[] reducedFilter;
+
+		// if the filter has less dimensions than the input
+		if(filter.dims.length < in.dims.length) {
+			// Creat a reduced-dimension array to match the filter
+			reducedInput = new int[filter.dims.length];
+
+			// Count the total number of extra elements
+			extraInputDims = 1;
+			for(int i = filter.dims.length; i < in.dims.length; ++i) {
+				extraInputDims *= in.dims[i];
+			}
+
+			// Count elements of the input that fit in the dimensions of the filter
+			inputSize = 1;
+			for(int i = 0; i < filter.dims.length; ++i) {
+				inputSize *= in.dims[i];
+				reducedInput[i] = in.dims[i];
+				//reducedOutput[i]
+			}
+
+			// Iteratively complete convolution
+			int pos = 0;
+			for(int i = 0; i < extraInputDims; ++i) {
+				// Wrap an input vector
+				Vec v = new Vec(in, pos, inputSize);
+				Tensor t = new Tensor(v, reducedInput);
+
+				convolve(in, t, out, flipFilter, 1);
+			}
+
+		}
+
+		// if the input has less dimensions than the filter
+		else if(in.dims.length < filter.dims.length) {
+			// Create a reduced-dimension array to match the input
+			reducedFilter = new int[in.dims.length];
+			reducedOutput = new int[in.dims.length];
+
+			// Count the number of extra elements
+			extraFilterDims = 1;
+			extraOutputDims = 1;
+			for(int i = in.dims.length; i < filter.dims.length; ++i) {
+				extraFilterDims *= filter.dims[i];
+				extraOutputDims *= out.dims[i];
+			}
+
+			// Count elements of the filter that fit in the dimensions of the input
+			filterSize = 1;
+			for(int i = 0; i < in.dims.length; ++i) {
+				filterSize *= filter.dims[i];
+				outputSize *= out.
+				reducedFilter[i] = filter.dims[i];
+				reducedOutput[i] = out.dims[i];
+			}
+
+			// Iteratively complete convolution
+			int filterPos = 0;
+			int outputPos = 0;
+			for(int i = 0; i < extraFilterDims; ++i) {
+				// Wrap an input vector
+				Vec v = new Vec(filter, filterPos, filterSize);
+				Tensor t = new Tensor(v, reducedFilter);
+
+				// Wrap an output Vector
+				Vec w = new Vec(out, outputPos, outputSize);
+				System.out.println(w);
+				Tensor o = new Tensor(w, reducedOutput);
+
+				in.printDims();
+				t.printDims();
+				o.printDims();
+
+				convolve(in, t, o, flipFilter, 1);
+
+				System.out.println("output tensor:\n" + out);
+
+				filterPos += filterSize;
+				outputPos += outputSize;
+			}
+
+		} else { // the dimensions match, just do regular convolution
+			convolve(in, filter, out, flipFilter, 1);
+		}
+
+
+	}
+
+
+
+
 	/// The result is added to the existing contents of out. It does not replace the existing contents of out.
 	/// Padding is computed as necessary to fill the the out tensor.
 	/// filter is the filter to convolve with in.
@@ -46,9 +160,9 @@ class Tensor extends Vec {
 		// Precompute some values
 		int dc = in.dims.length;
 		if(dc != filter.dims.length)
-			throw new RuntimeException("input # dims: " + dc + ". filter # dims: " + filter.dims.length);
+			throw new RuntimeException("input # dims: " + dc + "!= filter # dims: " + filter.dims.length);
 		if(dc != out.dims.length)
-			throw new RuntimeException("input # dims: " + dc + ". output # dims: " + out.dims.length);
+			throw new RuntimeException("input # dims: " + dc + "!= output # dims: " + out.dims.length);
 		int[] kinner = new int[dc];
 		int[] kouter = new int[dc];
 		int[] stepInner = new int[dc];
@@ -188,4 +302,56 @@ class Tensor extends Vec {
 				throw new RuntimeException("wrong");
 		}
 	}
+
+
+
+		// /// Reduces dimensionality of tensors down to series of convolutions of 2-tensors
+		// static void convolve2D(Tensor in, Tensor filter, Tensor out) {
+		// 	// if(in.dims.length < 3)
+		// 	// 	throw new RuntimeException("");
+		//
+		// 	// Calculate the total number of 2-tensors in the input tensor
+		// 	int numInputFrames = 1;
+		// 	if(in.dims.length > 2) {
+		// 		for(int i = 2; i < in.dims.length; ++i) {
+		// 			numInputFrames *= in.dims[i];
+		// 		}
+		// 	}
+		//
+		// 	// Calculat number of filters
+		// 	int numFilters = 1;
+		// 	if(filter.dims.length > 2) {
+		// 		for(int i = 2; i < filter.dims.length; ++i) {
+		// 			numFilters *= filter.dims[i];
+		// 		}
+		// 	}
+		//
+		// 	// Calculate number of output?
+		// 	int numOutputFrames = 1;
+		// 	if(out.dims.length > 2) {
+		// 		for(int i = 0; i < out.dims.length) {
+		// 			numOutputFrames *= out.dims[i];
+		// 		}
+		// 	}
+		//
+		// 	// convolve each input 2-tensor with a filter
+		// 	if(in.dims.length > filter.dims.length) {
+		//
+		// 	}
+
+
+		// }
+
+		private static void convolve(Tensor smaller, Tensor larger, Tensor out, int largerDims,
+			int extraDims, int[] dims, boolean flipFilter) {
+
+			int pos = 0;
+			for(int i = 0; i < extraDims; ++i) {
+				// Wrap a compatible tensor
+				Vec v = new Vec(larger, pos, largerDims);
+				Tensor t = new Tensor(v, dims);
+
+
+			}
+		}
 }
