@@ -71,54 +71,25 @@ class LayerConv extends Layer {
     // Call the wrapper convolution function
     Tensor.convolve(in, filter, out, false);
 
-    // TODO: add functionality to break down inputs into 2-tensors for safety also
+    // Vec to add bias to each output tensor
+    Vec bias = new Vec(outputArea);
 
-    // TODO: make a wrapper for tensors
+    int biasPos = 0;
+    int outputPos = 0;
+    for(int i = 0; i < biases.size(); ++i) {
+      // fill the bias vector with a bias value
+      double b = biases.get(i);
+      bias.fill(b);
 
-    //Tensor.convolve(in, filter, out, false, 1);
+      // Get a 2-tensor from the output
+      Vec o = new Vec(out, outputPos, outputArea);
 
-    // int pos = 0;
-    // int[] tempDims = new int[2];
-    // for(int i = 0; i < totalBiases; ++i) { // totalBiases in this context is # of filter planes
-    //
-    //   // wrap a single filter as a vector
-    //   Vec tempFilter = new Vec(filters, pos, filterArea);
-    //
-    //   // wrap a 2-tensor from the output
-    //   Vec tempOut = new Vec(x, )
-    //
-    //   // reduce the filterDims to length 2
-    //   tempDims[0] = filterWidth;
-    //   tempDims[1] = filterHeight;
-    //
-    //   // wrap it as a tensor
-    //   Tensor t = new Tensor(temp, tempDims);
-    //
-    //   Tensor.convolve(in, t, out, false, 1);
-    // }
+      // add the bias value to the corrseponding 2-tensor
+      o.add(bias);
 
-    // Vec to add bias to each tensor
-    // Vec bias = new Vec(filterArea);
-    //
-    // pos = 0; // reset pos for next operation
-    // for(int i = 0; i < biases.size(); ++i) {
-    //
-    //   // Get a single filter
-    //   Vec f = new Vec(out, pos, filterArea);
-    //   System.out.println(f);
-    //
-    //   // get a single output frame
-    //   // Vec o = new Vec(out, pos, )
-    //
-    //   // fill the bias vector with a bias value
-    //   double b = biases.get(i);
-    //   bias.fill(b);
-    //
-    //   // add the bias value to the corrseponding 2-tensor
-    //   f.add(bias);
-    //
-    //   pos += filterArea;
-    // }
+      ++biasPos;
+      outputPos += outputArea;
+    }
   }
 
   Vec backProp(Vec weights, Vec prevBlame) {

@@ -61,6 +61,18 @@ public class Matrix
 		setSize(rows, cols);
 	}
 
+	/// Build a matrix based on a 2x2 int array
+	public Matrix(int[] dims) {
+		if(dims.length > 2)
+			throw new IllegalArgumentException("Matrices are 2 dimensional!");
+
+		this.m_filename    = "";
+		this.m_attr_name   = new ArrayList<String>();
+		this.m_str_to_enum = new ArrayList<HashMap<String, Integer>>();
+		this.m_enum_to_str = new ArrayList<HashMap<Integer, String>>();
+		setSize(dims[0], dims[1]);
+	}
+
 
 	public Matrix(Matrix that)
 	{
@@ -356,8 +368,7 @@ public class Matrix
 	/// Makes a rows-by-columns matrix of *ALL CONTINUOUS VALUES*.
 	/// This method wipes out any data currently in the matrix. It also
 	/// wipes out any meta-data.
-	public void setSize(int rows, int cols)
-	{
+	public void setSize(int rows, int cols) {
 		m_data.clear();
 
 		// Set the meta-data
@@ -369,6 +380,26 @@ public class Matrix
 		// Make space for each of the columns, then each of the rows
 		newColumns(cols);
 		newRows(rows);
+	}
+
+	/// Makes a rows-by-columns matrix of *ALL CONTINUOUS VALUES*.
+	/// This method wipes out any data currently in the matrix. It also
+	/// wipes out any meta-data.
+	public void setSize(int[] dims) {
+		if(dims.length > 2)
+			throw new IllegalArgumentException("matrices are 2 dimensional!");
+
+		m_data.clear();
+
+		// Set the meta-data
+		m_filename = "";
+		m_attr_name.clear();
+		m_str_to_enum.clear();
+		m_enum_to_str.clear();
+
+		// Make space for each of the columns, then each of the rows
+		newColumns(dims[1]);
+		newRows(dims[0]);
 	}
 
 	/// Clears this matrix and copies the meta-data from that matrix.
@@ -638,6 +669,19 @@ public class Matrix
 		}
 
 		return min;
+	}
+
+	/// returns the single largest value in the matrix
+	public double maxValue() {
+		double max = this.row(0).get(0);
+
+		for(int i = 0; i < this.rows(); ++i) {
+			for(int j = 0; j < this.cols(); ++j) {
+				if(this.row(i).get(j) > max)
+					max = this.row(i).get(j);
+			}
+		}
+		return max;
 	}
 
 

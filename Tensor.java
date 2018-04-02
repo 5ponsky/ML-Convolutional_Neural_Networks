@@ -59,6 +59,9 @@ class Tensor extends Vec {
 
 		// if the filter has less dimensions than the input
 		if(filter.dims.length < in.dims.length) {
+			if(true)
+				throw new RuntimeException("This code isn't finished yet!");
+
 			// Creat a reduced-dimension array to match the filter
 			reducedInput = new int[filter.dims.length];
 
@@ -104,9 +107,10 @@ class Tensor extends Vec {
 
 			// Count elements of the filter that fit in the dimensions of the input
 			filterSize = 1;
+			outputSize = 1;
 			for(int i = 0; i < in.dims.length; ++i) {
 				filterSize *= filter.dims[i];
-				outputSize *= out.
+				outputSize *= out.dims[i];
 				reducedFilter[i] = filter.dims[i];
 				reducedOutput[i] = out.dims[i];
 			}
@@ -121,16 +125,9 @@ class Tensor extends Vec {
 
 				// Wrap an output Vector
 				Vec w = new Vec(out, outputPos, outputSize);
-				System.out.println(w);
 				Tensor o = new Tensor(w, reducedOutput);
 
-				in.printDims();
-				t.printDims();
-				o.printDims();
-
 				convolve(in, t, o, flipFilter, 1);
-
-				System.out.println("output tensor:\n" + out);
 
 				filterPos += filterSize;
 				outputPos += outputSize;

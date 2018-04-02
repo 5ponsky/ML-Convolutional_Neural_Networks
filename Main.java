@@ -382,13 +382,13 @@ class Main
 		NeuralNet nn = new NeuralNet(r);
 		nn.layers.add(new LayerConv(new int[]{4, 4}, new int[]{3, 3, 2},
 			new int[]{4, 4, 2}));
-		//nn.layers.add(new LayerLeakyRectifier(4 * 4 * 2));
-		//nn.layers.add(new LayerMaxPooling2D(4, 4, 2));
+		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 2));
+		nn.layers.add(new LayerMaxPooling2D(4, 4, 2));
 
 		double[] w = {
 			0,							// bias #1
 			0.1,						// bias #2
-			
+
 			0.01,0.02,0.03, // filter #1
 			0.04,0.05,0.06,
 			0.07,0.08,0.09,
@@ -409,10 +409,14 @@ class Main
 		};
 		Vec input = new Vec(in);
 
-		nn.layers.get(0).activate(nn.weights, input);
+		//nn.layers.get(0).activate(nn.weights, input);
+		nn.predict(input);
 
-		System.out.println("weights:\n" + nn.layers.get(0).activation);
-		System.out.println("activation:\n" + nn.layers.get(0).activation);
+		//System.out.println("weights:\n" + nn.layers.get(0).activation);
+		System.out.println("activation 0:\n" + nn.layers.get(0).activation);
+		System.out.println("activation 1:\n" + nn.layers.get(1).activation);
+		System.out.println("activation 2:\n" + nn.layers.get(2).activation);
+
 	}
 
 	public static void main(String[] args)

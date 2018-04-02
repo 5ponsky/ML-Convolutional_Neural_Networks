@@ -13,7 +13,7 @@ class LayerLeakyRectifier extends Layer {
   void activate(Vec weights, Vec x) {
     for(int i = 0; i < outputs; ++i) {
       double val = x.get(i);
-      activation.set(i, val > 0 ? scale * val : val);
+      activation.set(i, val > 0 ? val : scale * val);
     }
   }
 
@@ -28,7 +28,7 @@ class LayerLeakyRectifier extends Layer {
 
     for(int i = 0; i < inputs; ++i) {
       double val = prevBlame.get(i);
-      double derivative = (val > 0 ? scale : 1);
+      double derivative = (val > 0 ? 1 : scale);
       nextBlame.set(i, derivative);
     }
 

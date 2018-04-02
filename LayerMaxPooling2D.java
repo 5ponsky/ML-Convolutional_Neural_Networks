@@ -2,17 +2,21 @@ import java.util.Random;
 
 
 class LayerMaxPooling2D extends Layer {
-  static final int poolsize = 4; // Emulating a nxn matrix as a vector
+  static final int[] pooling_dims = {2, 2}; // Emulating a nxn matrix as a vector
+  static final int poolsize = 4; // multiply all elements of the pool together
   int width, depth, height, planeSize;
+  Vec maxMap; // maintains a list of indexes of where the max is for backprop
 
   int getNumberWeights() { return 0; }
 
   LayerMaxPooling2D(int width, int height, int depth) {
-    super(width * height, (width * height) / poolsize);
+    super(width * height, (width * height * depth) / poolsize);
     this.width = width;
     this.height = height;
     this.depth = depth;
     this.planeSize = width * height;
+
+    maxMap = new Vec((width * height * depth) / poolsize);
 
     // Error checking to make sure we can pool over the planar dimensions
     if(width % poolsize != 0)
@@ -21,19 +25,40 @@ class LayerMaxPooling2D extends Layer {
       throw new IllegalArgumentException("H: " + height + " / " + poolsize + " not an integer");
   }
 
+  /// Pool over each 2-tensor 
   void activate(Vec weights, Vec x) {
     if(x.size() % poolsize != 0)
       throw new RuntimeException("input vector cannot be rastered evenly");
 
-    int pos = 0;
-    for(int i = 0; i < depth; ++i) {
-      for(int j = 0; j < activation.size(); ++j) {
-        Vec v = new Vec(x, pos, poolsize);
-        double max = v.findMax();
-        activation.set(j, max);
-        pos += poolsize;
+    // Push the input vector into a matrix
+    int x_pos = 0;
+    Matrix input = new Matrix();
+    input.setSize(height * depth, width); // extend the height of the matrix for depth
+    for(int i = 0; i < input.rows(); ++i) {
+      for(int j = 0; j < input.cols(); ++j) {
+        input.row(i).set(j, x.get(x_pos));
+        ++x_pos;
       }
     }
+
+    // Pool matrix for pooling operation
+    Matrix pooling = new Matrix(pooling_dims);
+
+    // Pool over the input vector
+    int pos = 0;
+    for(int i = 0; i < pooling.rows() * depth; ++i) { // pool over the whole depth of each matrix
+      for(int j = 0; j < pooling.cols(); ++j) {
+        pooling.copyBlock(0, 0, input, i * pooling.rows(), j * pooling.cols(), pooling.rows(), pooling.cols());
+
+        // TODO: mark each value that was the max for backprop
+
+        // find the max value
+        double max = pooling.maxValue();
+        activation.set(pos, max);
+        ++pos;
+      }
+    }
+
   }
 
   Vec backProp(Vec weights, Vec prevBlame) {
