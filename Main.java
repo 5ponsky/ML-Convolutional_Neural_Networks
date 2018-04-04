@@ -409,6 +409,15 @@ class Main
 		};
 		Vec input = new Vec(in);
 
+		double[] t = {
+			0.7,0.6,
+			0.5,0.4,
+
+			0.3,0.2,
+			0.1,0
+		};
+		Vec target = new Vec(t);
+
 		//nn.layers.get(0).activate(nn.weights, input);
 		nn.predict(input);
 

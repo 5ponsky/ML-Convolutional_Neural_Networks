@@ -4,8 +4,9 @@ import java.util.Random;
 class LayerMaxPooling2D extends Layer {
   static final int[] pooling_dims = {2, 2}; // Emulating a nxn matrix as a vector
   static final int poolsize = 4; // multiply all elements of the pool together
+
+  Matrix pooling, maxMap; // Pool matrix for pooling operation
   int width, depth, height, planeSize;
-  Vec maxMap; // maintains a list of indexes of where the max is for backprop
 
   int getNumberWeights() { return 0; }
 
@@ -16,7 +17,9 @@ class LayerMaxPooling2D extends Layer {
     this.depth = depth;
     this.planeSize = width * height;
 
-    maxMap = new Vec((width * height * depth) / poolsize);
+    // maxMap = new Vec((width * height * depth) / poolsize);
+
+    pooling = new Matrix(pooling_dims);
 
     // Error checking to make sure we can pool over the planar dimensions
     if(width % poolsize != 0)
@@ -25,7 +28,7 @@ class LayerMaxPooling2D extends Layer {
       throw new IllegalArgumentException("H: " + height + " / " + poolsize + " not an integer");
   }
 
-  /// Pool over each 2-tensor 
+  /// Pool over each 2-tensor
   void activate(Vec weights, Vec x) {
     if(x.size() % poolsize != 0)
       throw new RuntimeException("input vector cannot be rastered evenly");
@@ -40,9 +43,6 @@ class LayerMaxPooling2D extends Layer {
         ++x_pos;
       }
     }
-
-    // Pool matrix for pooling operation
-    Matrix pooling = new Matrix(pooling_dims);
 
     // Pool over the input vector
     int pos = 0;
