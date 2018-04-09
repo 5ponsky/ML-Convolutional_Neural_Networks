@@ -684,6 +684,8 @@ public class Matrix
 		return max;
 	}
 
+	/// Returns the
+
 
 	/// Returns the maximum element in the specifed column. (Elements with the value UNKNOWN_VALUE are ignored.)
 	public double columnMax(int col)

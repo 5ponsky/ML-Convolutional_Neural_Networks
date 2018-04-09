@@ -95,7 +95,7 @@ class LayerConv extends Layer {
   Vec backProp(Vec weights, Vec prevBlame) {
     Tensor prev_blame = new Tensor(prevBlame, outputDims);
 
-
+    return new Vec(1);
   }
 
   void updateGradient(Vec x, Vec gradient) {

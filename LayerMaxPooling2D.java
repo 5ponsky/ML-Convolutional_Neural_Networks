@@ -5,20 +5,22 @@ class LayerMaxPooling2D extends Layer {
   static final int[] pooling_dims = {2, 2}; // Emulating a nxn matrix as a vector
   static final int poolsize = 4; // multiply all elements of the pool together
 
-  Matrix pooling, maxMap; // Pool matrix for pooling operation
+  Vec maxMap; // Saves the index of the maxmimum value for backProp
+
+  Matrix pooling; // Pool matrix for pooling operation
   int width, depth, height, planeSize;
 
   int getNumberWeights() { return 0; }
 
   LayerMaxPooling2D(int width, int height, int depth) {
-    super(width * height, (width * height * depth) / poolsize);
+    super(width * height * depth, (width * height * depth) / poolsize);
     this.width = width;
     this.height = height;
     this.depth = depth;
     this.planeSize = width * height;
 
-    maxMap = new Matrix((height * depth) / poolsize, width / poolsize);
-
+    maxMap = new Vec(outputs);
+    //maxMap = new Matrix((height * depth) / pooling_dims[0], width / pooling_dims[1]);
     pooling = new Matrix(pooling_dims);
 
     // Error checking to make sure we can pool over the planar dimensions
@@ -52,8 +54,23 @@ class LayerMaxPooling2D extends Layer {
 
         // TODO: mark each value that was the max for backprop
 
-        // find the max value
-        double max = pooling.maxValue();
+        // find the max value and retain its index
+        double max = pooling.row(0).get(0);
+        int maxIndex = 0;
+        int index = 0; // tracks where we are in the matrix
+        for(int k = 0; k < pooling.rows(); ++k) {
+          for(int l = 0; l < pooling.cols(); ++l) {
+
+            if(pooling.row(k).get(l) > max) {
+              max = pooling.row(k).get(l);
+              maxIndex = index;
+            }
+            ++index;
+          }
+        }
+
+        // Save the max value and its index
+        maxMap.set(pos, maxIndex);
         activation.set(pos, max);
         ++pos;
       }
@@ -62,8 +79,26 @@ class LayerMaxPooling2D extends Layer {
   }
 
   Vec backProp(Vec weights, Vec prevBlame) {
-    // Whichever value happened to be the maximum, it carries the blame
-    return new Vec(1);
+
+    Vec nextBlame = new Vec(inputs);
+    System.out.println("index: " + maxMap);
+
+    int pos = 0;
+    for(int i = 0; i < prevBlame.size(); ++i) {
+      double blame = prevBlame.get(i);
+      int index = (int)maxMap.get(i);
+
+      Vec v = new Vec(nextBlame, pos, poolsize);
+      v.set(index, blame);
+
+      pos += poolsize;
+      // for(int j = 0; j < poolsize; ++j) {
+      //   nextBlame.set(pos, blame);
+      //   ++pos;
+      // }
+    }
+
+    return nextBlame;
   }
 
   void updateGradient(Vec x, Vec gradient) {
