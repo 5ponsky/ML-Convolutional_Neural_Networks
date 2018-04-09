@@ -17,7 +17,7 @@ class LayerMaxPooling2D extends Layer {
     this.depth = depth;
     this.planeSize = width * height;
 
-    // maxMap = new Vec((width * height * depth) / poolsize);
+    maxMap = new Matrix((height * depth) / poolsize, width / poolsize);
 
     pooling = new Matrix(pooling_dims);
 

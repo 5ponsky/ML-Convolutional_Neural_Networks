@@ -133,6 +133,10 @@ class Tensor extends Vec {
 				outputPos += outputSize;
 			}
 
+		// If the output dimensions are smaller than the filter (probably backProp)
+		//} else if(out.dims.length < filter.dims.length) {
+
+
 		} else { // the dimensions match, just do regular convolution
 			convolve(in, filter, out, flipFilter, 1);
 		}

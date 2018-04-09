@@ -418,13 +418,18 @@ class Main
 		};
 		Vec target = new Vec(t);
 
-		//nn.layers.get(0).activate(nn.weights, input);
+		// Forward Prop
 		nn.predict(input);
-
-		//System.out.println("weights:\n" + nn.layers.get(0).activation);
 		System.out.println("activation 0:\n" + nn.layers.get(0).activation);
 		System.out.println("activation 1:\n" + nn.layers.get(1).activation);
 		System.out.println("activation 2:\n" + nn.layers.get(2).activation);
+
+		// backProp
+		nn.backProp(target);
+		System.out.println("blame 2: " + nn.layers.get(2).blame);
+		System.out.println("blame 2: " + nn.layers.get(2).blame);
+		System.out.println("blame 2: " + nn.layers.get(2).blame);
+
 
 	}
 
