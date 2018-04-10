@@ -19,7 +19,7 @@ class LayerMaxPooling2D extends Layer {
     this.depth = depth;
     this.planeSize = width * height;
 
-    maxMap = new Vec(outputs);
+    maxMap = new Vec(width*height*depth);
     //maxMap = new Matrix((height * depth) / pooling_dims[0], width / pooling_dims[1]);
     pooling = new Matrix(pooling_dims);
 
@@ -48,40 +48,47 @@ class LayerMaxPooling2D extends Layer {
 
     // Pool over the input vector
     int pos = 0;
+    int index = 0; // tracks where we are in the matrix
     for(int i = 0; i < pooling.rows() * depth; ++i) { // pool over the whole depth of each matrix
       for(int j = 0; j < pooling.cols(); ++j) {
         pooling.copyBlock(0, 0, input, i * pooling.rows(), j * pooling.cols(), pooling.rows(), pooling.cols());
 
         // TODO: mark each value that was the max for backprop
+        //Matrix testMap = new Matrix(height * depth, width);
+        Vec v = new Vec(maxMap, (pos * poolsize), poolsize);
 
         // find the max value and retain its index
         double max = pooling.row(0).get(0);
         int maxIndex = 0;
-        int index = 0; // tracks where we are in the matrix
+
         for(int k = 0; k < pooling.rows(); ++k) {
           for(int l = 0; l < pooling.cols(); ++l) {
 
             if(pooling.row(k).get(l) > max) {
               max = pooling.row(k).get(l);
               maxIndex = index;
+              //maxMap.set((i*j)+(k*l), maxIndex); // almsot
+              //v.set(index, max);
             }
             ++index;
           }
         }
 
         // Save the max value and its index
-        maxMap.set(pos, maxIndex);
+        //v.set(maxIndex, max);
+        maxMap.set(maxIndex, max);
         activation.set(pos, max);
         ++pos;
       }
     }
+
+    System.out.println("max: " + maxMap);
 
   }
 
   Vec backProp(Vec weights, Vec prevBlame) {
 
     Vec nextBlame = new Vec(inputs);
-    System.out.println("index: " + maxMap);
 
     int pos = 0;
     for(int i = 0; i < prevBlame.size(); ++i) {
@@ -92,10 +99,6 @@ class LayerMaxPooling2D extends Layer {
       v.set(index, blame);
 
       pos += poolsize;
-      // for(int j = 0; j < poolsize; ++j) {
-      //   nextBlame.set(pos, blame);
-      //   ++pos;
-      // }
     }
 
     return nextBlame;
