@@ -5,7 +5,8 @@ class LayerMaxPooling2D extends Layer {
   static final int[] pooling_dims = {2, 2}; // Emulating a nxn matrix as a vector
   static final int poolsize = 4; // multiply all elements of the pool together
 
-  Vec maxMap; // Saves the index of the maxmimum value for backProp
+  //Vec maxMap; // Saves the index of the maxmimum value for backProp
+  boolean[][] maxMap;
 
   Matrix pooling; // Pool matrix for pooling operation
   int width, depth, height, planeSize;
@@ -19,7 +20,8 @@ class LayerMaxPooling2D extends Layer {
     this.depth = depth;
     this.planeSize = width * height;
 
-    maxMap = new Vec(width*height*depth);
+    //maxMap = new Vec(width*height*depth);
+    maxMap = new boolean[height * depth][width];
     //maxMap = new Matrix((height * depth) / pooling_dims[0], width / pooling_dims[1]);
     pooling = new Matrix(pooling_dims);
 
@@ -49,13 +51,11 @@ class LayerMaxPooling2D extends Layer {
     // Pool over the input vector
     int pos = 0;
     int index = 0; // tracks where we are in the matrix
+    int row = 0;
+    int col = 0;
     for(int i = 0; i < pooling.rows() * depth; ++i) { // pool over the whole depth of each matrix
       for(int j = 0; j < pooling.cols(); ++j) {
         pooling.copyBlock(0, 0, input, i * pooling.rows(), j * pooling.cols(), pooling.rows(), pooling.cols());
-
-        // TODO: mark each value that was the max for backprop
-        //Matrix testMap = new Matrix(height * depth, width);
-        Vec v = new Vec(maxMap, (pos * poolsize), poolsize);
 
         // find the max value and retain its index
         double max = pooling.row(0).get(0);
@@ -67,6 +67,8 @@ class LayerMaxPooling2D extends Layer {
             if(pooling.row(k).get(l) > max) {
               max = pooling.row(k).get(l);
               maxIndex = index;
+              row = k;
+              col = l;
               //maxMap.set((i*j)+(k*l), maxIndex); // almsot
               //v.set(index, max);
             }
@@ -74,15 +76,26 @@ class LayerMaxPooling2D extends Layer {
           }
         }
 
+
         // Save the max value and its index
-        //v.set(maxIndex, max);
-        maxMap.set(maxIndex, max);
+        //double max = pooling.maxValue();
+        //maxMap.set(maxIndex, max);
+        System.out.println((i*pooling.rows()+row) + " " + (j*pooling.cols() + col));
+        System.out.println(j + " * " + pooling.cols() + " + " + col);
+        maxMap[i * pooling.rows() + row][j * pooling.cols() + col] = true;
         activation.set(pos, max);
         ++pos;
       }
     }
 
-    System.out.println("max: " + maxMap);
+    // Save the index of the max value
+    for(int i = 0; i < input.rows(); ++i) {
+      for(int j = 0; j < input.cols(); ++j) {
+        System.out.print(maxMap[i][j] + ",");
+      }
+      System.out.println("");
+    }
+
 
   }
 
@@ -93,10 +106,10 @@ class LayerMaxPooling2D extends Layer {
     int pos = 0;
     for(int i = 0; i < prevBlame.size(); ++i) {
       double blame = prevBlame.get(i);
-      int index = (int)maxMap.get(i);
+      //int index = (int)maxMap.get(i);
 
       Vec v = new Vec(nextBlame, pos, poolsize);
-      v.set(index, blame);
+      //v.set(index, blame);
 
       pos += poolsize;
     }
