@@ -56,6 +56,8 @@ class LayerMaxPooling2D extends Layer {
     for(int i = 0; i < pooling.rows() * depth; ++i) { // pool over the whole depth of each matrix
       for(int j = 0; j < pooling.cols(); ++j) {
         pooling.copyBlock(0, 0, input, i * pooling.rows(), j * pooling.cols(), pooling.rows(), pooling.cols());
+        row = 0;
+        col = 0;
 
         // find the max value and retain its index
         double max = pooling.row(0).get(0);
@@ -69,8 +71,6 @@ class LayerMaxPooling2D extends Layer {
               maxIndex = index;
               row = k;
               col = l;
-              //maxMap.set((i*j)+(k*l), maxIndex); // almsot
-              //v.set(index, max);
             }
             ++index;
           }
@@ -78,24 +78,11 @@ class LayerMaxPooling2D extends Layer {
 
 
         // Save the max value and its index
-        //double max = pooling.maxValue();
-        //maxMap.set(maxIndex, max);
-        System.out.println((i*pooling.rows()+row) + " " + (j*pooling.cols() + col));
-        System.out.println(j + " * " + pooling.cols() + " + " + col);
         maxMap[i * pooling.rows() + row][j * pooling.cols() + col] = true;
         activation.set(pos, max);
         ++pos;
       }
     }
-
-    // Save the index of the max value
-    for(int i = 0; i < input.rows(); ++i) {
-      for(int j = 0; j < input.cols(); ++j) {
-        System.out.print(maxMap[i][j] + ",");
-      }
-      System.out.println("");
-    }
-
 
   }
 
@@ -104,14 +91,20 @@ class LayerMaxPooling2D extends Layer {
     Vec nextBlame = new Vec(inputs);
 
     int pos = 0;
-    for(int i = 0; i < prevBlame.size(); ++i) {
-      double blame = prevBlame.get(i);
-      //int index = (int)maxMap.get(i);
+    int pb = 0;
+    for(int i = 0; i < maxMap.length; ++i) {
 
-      Vec v = new Vec(nextBlame, pos, poolsize);
-      //v.set(index, blame);
+      for(int j = 0; j < maxMap[0].length; ++j) {
+        if(maxMap[i][j] == true) {
+          double blame = prevBlame.get(pb);
+          nextBlame.set(pos, blame);
+          ++pb;
+        }
+        else
+          nextBlame.set(pos, 0.0);
 
-      pos += poolsize;
+        ++pos;
+      }
     }
 
     return nextBlame;
