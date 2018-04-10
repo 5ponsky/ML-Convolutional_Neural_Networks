@@ -95,6 +95,15 @@ class LayerConv extends Layer {
   Vec backProp(Vec weights, Vec prevBlame) {
     Tensor prev_blame = new Tensor(prevBlame, outputDims);
 
+    Vec nextBlame = new Vec(inputs);
+    Tensor next_blame = new Tensor(nextBlame, inputDims);
+
+    Vec biases = new Vec(weights, 0, totalBiases); // ignore b
+    Vec filters = new Vec(weights, totalBiases, filterWeights-totalBiases);
+    Tensor filter = new Tensor(filters, filterDims);
+
+    Tensor.convolve(prev_blame, filter, next_blame, true);
+
     return new Vec(1);
   }
 

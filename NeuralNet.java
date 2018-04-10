@@ -56,6 +56,8 @@ public class NeuralNet extends SupervisedLearner {
     blame.add(target);
     blame.addScaled(-1, layers.get(layers.size()-1).activation);
 
+    // keeping this around for good measure?
+    layers.get(layers.size()-1).blame = new Vec(blame);
 
     int pos = weights.size();
     for(int i = layers.size()-1; i >= 0; --i) {
