@@ -3,6 +3,7 @@ import java.util.Random;
 
 class LayerConv extends Layer {
   int[] inputDims, filterDims, outputDims;
+  int inputWidth, inputHeight, inputArea;
   int filterWeights, totalBiases, filterWidth, filterHeight, filterArea;
   int outputWidth, outputHeight, outputArea;
   Vec filter;
@@ -15,6 +16,11 @@ class LayerConv extends Layer {
     this.inputDims = inputDims;
     this.filterDims = filterDims;
     this.outputDims = outputDims;
+
+    // Calculating important properties now for input (input)
+    inputWidth = inputDims[0];
+    inputHeight = inputDims[1];
+    inputArea = inputWidth * inputHeight;
 
     // Calculating important properties now to save computation (filter)
     filterWidth = filterDims[0];
@@ -93,6 +99,9 @@ class LayerConv extends Layer {
   }
 
   Vec backProp(Vec weights, Vec prevBlame) {
+    blame.fill(0.0);
+    blame.add(prevBlame);
+
     Tensor prev_blame = new Tensor(prevBlame, outputDims);
 
     Vec nextBlame = new Vec(inputs);
@@ -102,12 +111,46 @@ class LayerConv extends Layer {
     Vec filters = new Vec(weights, totalBiases, filterWeights-totalBiases);
     Tensor filter = new Tensor(filters, filterDims);
 
-    Tensor.convolve(prev_blame, filter, next_blame, true);
+    int pbPos = 0;
+    int filterPos = 0;
+    for(int i = filter.extra_dimensions()-1; i >=0 ; --i) {
+      // Wrap a prevBlame vector
+      Vec v = new Vec(prevBlame, pbPos, outputArea);
+      int[] reducedPBDims = prev_blame.reduced_dimensions();
+      Tensor pb = new Tensor(v, reducedPBDims);
 
-    return new Vec(1);
+      // Wrap a filter vector
+      Vec w = new Vec(filter, filterPos, filterArea);
+      int[] reducedFDims = filter.reduced_dimensions();
+      Tensor f = new Tensor(w, reducedFDims);
+
+      Tensor.convolve(pb, f, next_blame, true, 1);
+
+    }
+    return nextBlame;
   }
 
   void updateGradient(Vec x, Vec gradient) {
+    System.out.println("x: " + x.size());
+    System.out.println("blame: " + blame.size());
+    System.out.println("totalB: " + totalBiases);
+
+    Vec biases = new Vec(gradient, 0, totalBiases);
+    biases.add(blame);
+
+    // Wrap in the input/activation from previous layer
+    Tensor in = new Tensor(x, inputDims);
+
+    // Wrap the blame output (kernel in this case)
+    Tensor kernel = new Tensor(blame, outputDims);
+
+    // In this case the filter/gradient is the output
+    Tensor out = new Tensor(gradient, filterDims);
+
+    in.printDims();
+    kernel.printDims();
+    out.printDims();
+    //Tensor.convolve
 
   }
 

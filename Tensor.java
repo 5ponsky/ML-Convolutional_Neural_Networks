@@ -41,6 +41,33 @@ class Tensor extends Vec {
 		System.out.println(out);
 	}
 
+	int extra_dimensions() {
+		int ed = 1;
+
+		if(this.dims.length < 3)
+			return 1; // this is a 2-tensor
+		else {
+			for(int i = 2; i < this.dims.length; ++i) {
+				ed *= this.dims[i];
+			}
+		}
+
+		return ed;
+	}
+
+	/// return dimensions of a 2-tensor
+	int[] reduced_dimensions() {
+		if(this.dims.length < 3)
+			throw new IllegalArgumentException("already a 2 tensor");
+
+		int[] rd = new int[2];
+
+		for(int i = 0; i < 2; ++i) {
+			rd[i] = this.dims[i];
+		}
+		return rd;
+	}
+
 	/// Wraps the original convolve function to handle tensors of different dimensions
 	static void convolve(Tensor in, Tensor filter, Tensor out, boolean flipFilter) {
 		// neccesary values for the output tensor, will be needed in both cases
@@ -80,7 +107,7 @@ class Tensor extends Vec {
 			}
 
 			// Iteratively complete convolution
-			int pos = 0;
+			int pos = 0; /// WARNING! pos isn't iterated?
 			for(int i = 0; i < extraInputDims; ++i) {
 				// Wrap an input vector
 				Vec v = new Vec(in, pos, inputSize);

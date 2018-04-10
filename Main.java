@@ -437,6 +437,8 @@ class Main
 		System.out.println("blame 1: " + nn.layers.get(1).blame);
 		System.out.println("blame 0: " + nn.layers.get(0).blame);
 
+		nn.updateGradient(input);
+		System.out.println(nn.gradient);
 
 	}
 
