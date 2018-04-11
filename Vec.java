@@ -225,5 +225,14 @@ public class Vec {
 		return (sum / vals.length);
 	}
 
-	
+	/// Adds all the values within the vec into a single value
+	public double innerSum() {
+		double sum = 0;
+		for(int i = 0; i < vals.length; ++i) {
+			sum += vals[i];
+		}
+		return sum;
+	}
+
+
 }

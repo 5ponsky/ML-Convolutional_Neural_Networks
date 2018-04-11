@@ -136,7 +136,13 @@ class LayerConv extends Layer {
     System.out.println("totalB: " + totalBiases);
 
     Vec biases = new Vec(gradient, 0, totalBiases);
-    biases.add(blame);
+
+    int pos = 0;
+    for(int i = 0; i < biases.size(); ++i) {
+      Vec v = new Vec(blame, pos, outputArea);
+      biases.set(i, biases.get(i) + v.innerSum());
+      pos += outputArea;
+    }
 
     // Wrap in the input/activation from previous layer
     Tensor in = new Tensor(x, inputDims);
