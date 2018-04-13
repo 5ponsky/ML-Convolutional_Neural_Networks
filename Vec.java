@@ -228,8 +228,8 @@ public class Vec {
 	/// Adds all the values within the vec into a single value
 	public double innerSum() {
 		double sum = 0;
-		for(int i = 0; i < vals.length; ++i) {
-			sum += vals[i];
+		for(int i = 0; i < len; ++i) {
+			sum += vals[start + i];
 		}
 		return sum;
 	}

@@ -27,8 +27,9 @@ class LayerLeakyRectifier extends Layer {
     blame.add(prevBlame);
 
     for(int i = 0; i < inputs; ++i) {
-      double val = prevBlame.get(i);
-      double derivative = (val > 0 ? 1 : scale);
+      double act = activation.get(i);
+      double val = blame.get(i);
+      double derivative = (act > 0 ? val : scale * val);
       nextBlame.set(i, derivative);
     }
 

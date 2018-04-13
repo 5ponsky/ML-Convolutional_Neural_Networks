@@ -438,7 +438,36 @@ class Main
 		System.out.println("blame 0: " + nn.layers.get(0).blame);
 
 		nn.updateGradient(input);
-		System.out.println(nn.gradient);
+		System.out.println("gradient: " + nn.gradient);
+
+		nn.refineWeights(0.01);
+		System.out.println("weights: " + nn.weights);
+
+		Vec cd = nn.centralDifference(input);
+		System.out.println("cd: " + cd);
+
+
+	}
+
+	public static void asgn4() {
+
+
+		Random r = new Random(123456);
+		NeuralNet nn = new NeuralNet(r);
+
+		nn.layers.add(new LayerConv(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
+		nn.layers.add(new LayerLeakyRectifier(8 * 8 * 4));
+		nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
+		nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
+		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 6));
+		nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
+		nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
+		nn.initWeights();
+
+		//nn.train()
+
+		System.out.println("Computed: " + nn.gradient);
+		//System.out.println("Central diff: " + )
 
 	}
 

@@ -86,9 +86,48 @@ public class NeuralNet extends SupervisedLearner {
     }
   }
 
+  Vec central_difference(Vec x, Vec target) {
+    double h = 0.0003;
+
+    Vec cd_gradient = new Vec(gradient.size());
+    Vec validation = new Vec(weights); // Used for validating the weights
+
+    for(int i = 0; i < weights.size(); ++i) {
+      double weight = weights.get(i);
+
+      // right side
+      weights.set(i, weight + h);
+      Vec right = predict(x);
+      double r_res = 0.0;
+      for(int j = 0; j < right.size(); ++j) {
+        r_res += ((right.get(j) - target.get(j)) * (right.get(j) - target.get(j)));
+      }
+
+      // left side
+      weights.set(i, weight - h);
+      Vec left = predict(x);
+      double l_res = 0.0;
+      for(int j = 0; j < left.size(); ++j) {
+        l_res += ((left.get(j) - target.get(j)) * (left.get(j) - target.get(j)));
+      }
+
+      double res = (l_res - r_res) / (2 * h);
+      cd_gradient.set(i, res);
+
+      weights.set(i, weight);
+
+      // Validate that the weights have returned to their original values
+      for(int j = 0; j < weights.size(); ++j) {
+        if(weights.get(j) != validation.get(j))
+          throw new RuntimeException("Error resolving weights!");
+      }
+    }
+    return cd_gradient;
+  }
+
   /// This is for testing/estimating if the gradient is correct
-  void centralDifference(Vec x) {
-    Vec cd_gradient = new Vec(gradient);
+  Vec centralDifference(Vec x) {
+    Vec cd_gradient = new Vec(gradient.size());
 
 
     // Produce a vector for the constant h
@@ -122,7 +161,7 @@ public class NeuralNet extends SupervisedLearner {
       pos += weightsChunk;
     }
 
-
+    return cd_gradient;
   }
 
   Vec predict(Vec in) {

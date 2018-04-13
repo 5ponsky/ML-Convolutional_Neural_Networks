@@ -55,6 +55,30 @@ class Tensor extends Vec {
 		return ed;
 	}
 
+	// Find the tensor with more dimensions and return those extra dimensions
+	static int[] dims_difference(Tensor a, Tensor b) {
+		if(a.dims.length == b.dims.length)
+			throw new RuntimeException("Tensors have same length, this is useless");
+
+		int index = 0;
+		int[] difference;
+		if(a.dims.length > b.dims.length) {
+			difference = new int[a.dims.length - b.dims.length];
+			for(int i = b.dims.length; i < a.dims.length; ++i) {
+				difference[index] = a.dims[i];
+				++index;
+			}
+		} else {
+			difference = new int[b.dims.length - a.dims.length];
+			for(int i = a.dims.length; i < b.dims.length; ++i) {
+				difference[index] = b.dims[i];
+				++index;
+			}
+		}
+
+		return difference;
+	}
+
 	/// return dimensions of a 2-tensor
 	int[] reduced_dimensions() {
 		if(this.dims.length < 3)
@@ -66,6 +90,91 @@ class Tensor extends Vec {
 			rd[i] = this.dims[i];
 		}
 		return rd;
+	}
+
+	static void safety_convolve(Tensor in, Tensor filter, Tensor out, boolean flipFilter) {
+		int[] tensor_slice;
+		int extra_dimensions_size = 1;
+		int out_shift = 1;
+		int shift_length = 1;
+
+		// // The output will always have the same number of dimensions as the filter
+		// for(int i = 0; i < filter.dims.length; ++i) {
+		// 	out_shift *= out.dims[i];
+		// }
+
+		// The # of extra dimensions
+		int[] extra_dimensions = dims_difference(in, filter);
+
+		// compute the number of slices we must iterate
+		for(int i = 0; i < extra_dimensions.length; ++i) {
+			extra_dimensions_size *= extra_dimensions[i];
+		}
+
+		// if the 'in' is larger than the 'filter' or vice versa
+		if(filter.dims.length < in.dims.length) {
+			// The slice of the larger tensor for computational compatibility
+			tensor_slice = new int[in.dims.length - extra_dimensions.length];
+
+			// Compute the tensor 'slice' for the larger of the in/filter
+			for(int i = 0; i < filter.dims.length; ++i) {
+				tensor_slice[i] = in.dims[i];
+			}
+
+			// Compute the quantity of elements we must shift by
+			for(int i = 0; i < tensor_slice.length; ++i) {
+				shift_length *= tensor_slice[i];
+			}
+
+			// Compute the convolution slice by slice
+			int pos = 0;
+			for(int i = 0; i < extra_dimensions_size; ++i) {
+				// Wrap a vector of the larger tensor
+				Vec v = new Vec(in, pos, shift_length);
+
+				Tensor temp = new Tensor(v, tensor_slice);
+				convolve(temp, filter, out, flipFilter, 1);
+				pos += shift_length;
+			}
+
+		} else if(in.dims.length < filter.dims.length) {
+			// Compute a slice of the output
+			int[] out_slice = new int[filter.dims.length - extra_dimensions.length];
+
+			// The slice of the larger tensor for computational compatibility
+			tensor_slice = new int[filter.dims.length - extra_dimensions.length];
+
+			// Compute the tensor 'slice' for the larger of the in/filter
+			for(int i = 0; i < in.dims.length; ++i) {
+				tensor_slice[i] = filter.dims[i];
+				out_slice[i] = out.dims[i];
+			}
+
+			// Compute the quantity of elements we must shift by
+			for(int i = 0; i < tensor_slice.length; ++i) {
+				shift_length *= tensor_slice[i];
+				out_shift *= out_slice[i];
+			}
+
+			// Compute the convolution slice by slice
+			int filterPos = 0;
+			int outPos = 0;
+			for(int i = 0; i < extra_dimensions_size; ++i) {
+				// Wrap a vector of the larger tensor
+				Vec v = new Vec(filter, filterPos, shift_length);
+				Vec w = new Vec(out, outPos, out_shift);
+
+				Tensor tempFilter = new Tensor(v, tensor_slice);
+				Tensor tempOut = new Tensor(w, out_slice);
+
+
+				convolve(in, tempFilter, tempOut, flipFilter, 1);
+				filterPos += shift_length;
+				outPos += out_shift;
+			}
+
+		} else
+			throw new RuntimeException("Something went wrong!");
 	}
 
 	/// Wraps the original convolve function to handle tensors of different dimensions
