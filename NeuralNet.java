@@ -185,7 +185,7 @@ public class NeuralNet extends SupervisedLearner {
   /// Trains with a set of scrambled indices to improve efficiency
   void train(Matrix features, Matrix labels, int[] indices, int batch_size, double momentum) {
     if(batch_size < 1)
-      throw new IllegalArgumentException("Batch Size is invalid!");
+      throw new IllegalArgumentException("Batch Size < 1");
     if(momentum < 0.0)
       throw new IllegalArgumentException("Momentum < 0");
 
@@ -203,7 +203,7 @@ public class NeuralNet extends SupervisedLearner {
       updateGradient(in);
 
       // Temporary
-      central_difference(in, target);
+      //central_difference(in, target);
 
       if((trainingProgress + 1) % batch_size == 0) {
         refineWeights(learning_rate * learning_scale);

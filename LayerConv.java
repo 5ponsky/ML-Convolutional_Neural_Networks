@@ -71,11 +71,11 @@ class LayerConv extends Layer {
 
     // Strip the biases off of the weights
     Vec biases = new Vec(weights, 0, totalBiases);
+    System.out.println("b: " + biases);
     Vec filters = new Vec(weights, totalBiases, filterWeights-totalBiases);
     Tensor filter = new Tensor(filters, filterDims);
 
     // Call the wrapper convolution function
-    //Tensor.convolve(in, filter, out, false);
     Tensor.safety_convolve(in, filter, out, false);
 
     // Vec to add bias to each output tensor
@@ -112,22 +112,8 @@ class LayerConv extends Layer {
     Vec filters = new Vec(weights, totalBiases, filterWeights-totalBiases);
     Tensor filter = new Tensor(filters, filterDims);
 
-    int pbPos = 0;
-    int filterPos = 0;
-    for(int i = filter.extra_dimensions()-1; i >=0 ; --i) {
-      // Wrap a prevBlame vector
-      Vec v = new Vec(prevBlame, pbPos, outputArea);
-      int[] reducedPBDims = prev_blame.reduced_dimensions();
-      Tensor pb = new Tensor(v, reducedPBDims);
+    Tensor.safety_convolve(prev_blame, filter, next_blame, true);
 
-      // Wrap a filter vector
-      Vec w = new Vec(filter, filterPos, filterArea);
-      int[] reducedFDims = filter.reduced_dimensions();
-      Tensor f = new Tensor(w, reducedFDims);
-
-      Tensor.convolve(pb, f, next_blame, true, 1);
-
-    }
     return nextBlame;
   }
 
@@ -143,9 +129,7 @@ class LayerConv extends Layer {
       Vec v = new Vec(blame, pos, outputArea);
       biases.set(i, biases.get(i) + v.innerSum());
       pos += outputArea;
-      System.out.println("v: " + v);
     }
-    System.out.println(biases);
 
     // Wrap in the input/activation from previous layer
     Tensor in = new Tensor(x, inputDims);

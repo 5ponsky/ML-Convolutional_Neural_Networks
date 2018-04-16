@@ -58,7 +58,7 @@ class Tensor extends Vec {
 	// Find the tensor with more dimensions and return those extra dimensions
 	static int[] dims_difference(Tensor a, Tensor b) {
 		if(a.dims.length == b.dims.length)
-			throw new RuntimeException("Tensors have same length, this is useless");
+			return null;
 
 		int index = 0;
 		int[] difference;
@@ -92,27 +92,22 @@ class Tensor extends Vec {
 		return rd;
 	}
 
-	static void safety_convolve(Tensor in, Tensor filter, Tensor out, boolean flipFilter) {
+	static void safety_convolve(Tensor in, Tensor filter, Tensor out, boolean back_prop) {
 		int[] tensor_slice;
 		int extra_dimensions_size = 1;
 		int out_shift = 1;
 		int shift_length = 1;
 
-		// // The output will always have the same number of dimensions as the filter
-		// for(int i = 0; i < filter.dims.length; ++i) {
-		// 	out_shift *= out.dims[i];
-		// }
-
-		// The # of extra dimensions
-		int[] extra_dimensions = dims_difference(in, filter);
-
-		// compute the number of slices we must iterate
-		for(int i = 0; i < extra_dimensions.length; ++i) {
-			extra_dimensions_size *= extra_dimensions[i];
-		}
-
 		// if the 'in' is larger than the 'filter' or vice versa
 		if(filter.dims.length < in.dims.length) {
+			// The # of extra dimensions
+			int[] extra_dimensions = dims_difference(in, filter);
+
+			// compute the number of slices we must iterate
+			for(int i = 0; i < extra_dimensions.length; ++i) {
+				extra_dimensions_size *= extra_dimensions[i];
+			}
+
 			// The slice of the larger tensor for computational compatibility
 			tensor_slice = new int[in.dims.length - extra_dimensions.length];
 
@@ -127,17 +122,34 @@ class Tensor extends Vec {
 			}
 
 			// Compute the convolution slice by slice
-			int pos = 0;
-			for(int i = 0; i < extra_dimensions_size; ++i) {
-				// Wrap a vector of the larger tensor
-				Vec v = new Vec(in, pos, shift_length);
+			if(back_prop == false) {
+				int pos = 0;
+				for(int i = 0; i < extra_dimensions_size; ++i) {
+					// Wrap a vector of the larger tensor
+					Vec v = new Vec(in, pos, shift_length);
 
-				Tensor temp = new Tensor(v, tensor_slice);
-				convolve(temp, filter, out, flipFilter, 1);
-				pos += shift_length;
+					Tensor temp = new Tensor(v, tensor_slice);
+					convolve(temp, filter, out, back_prop, 1);
+					pos += shift_length;
+				}
+			} else if(back_prop == true) {
+				throw new RuntimeException("This functionality is not yet implemented");
+				// TODO: FINISH THIS CASE
+				// int pos = 0;
+				// for(int i = 0; i < ; ++i) {
+				// 	// Wrap a vector
+				// }
 			}
 
 		} else if(in.dims.length < filter.dims.length) {
+			// The # of extra dimensions
+			int[] extra_dimensions = dims_difference(in, filter);
+
+			// compute the number of slices we must iterate
+			for(int i = 0; i < extra_dimensions.length; ++i) {
+				extra_dimensions_size *= extra_dimensions[i];
+			}
+
 			// Compute a slice of the output
 			int[] out_slice = new int[filter.dims.length - extra_dimensions.length];
 
@@ -168,13 +180,60 @@ class Tensor extends Vec {
 				Tensor tempOut = new Tensor(w, out_slice);
 
 
-				convolve(in, tempFilter, tempOut, flipFilter, 1);
+				convolve(in, tempFilter, tempOut, back_prop, 1);
 				filterPos += shift_length;
 				outPos += out_shift;
 			}
 
-		} else
-			throw new RuntimeException("Something went wrong!");
+		} else if(filter.dims.length == in.dims.length)
+			if(back_prop == false) // normal convolution
+				convolve(in, filter, out, back_prop, 1);
+			else if(back_prop == true) { // backProp
+				if(in.dims.length == out.dims.length) { // regular backprop conv.
+					convolve(in, filter, out, back_prop, 1);
+				} else if(out.dims.length < in.dims.length) { // Assume in is smaller than out
+					int[] extra_dimensions = dims_difference(in, out);
+
+					for(int i = 0; i < extra_dimensions.length; ++i) {
+						extra_dimensions_size *= extra_dimensions[i];
+					}
+
+					int in_shift_length = 1;
+					int filter_shift_length = 1;
+
+					// slice for computational compat.
+					int[] in_tensor_slice = new int[in.dims.length - extra_dimensions.length];
+					int[] filter_tensor_slice = new int[filter.dims.length - extra_dimensions.length];
+
+					// compute the slice of the larger tensor
+					for(int i = 0; i < out.dims.length; ++i) {
+						in_tensor_slice[i] = in.dims[i];
+						filter_tensor_slice[i] = filter.dims[i];
+					}
+
+					for(int i = 0; i < in_tensor_slice.length; ++i) {
+						in_shift_length *= in_tensor_slice[i];
+						filter_shift_length *= filter_tensor_slice[i];
+					}
+
+					int inPos = 0;
+					int filterPos = 0;
+					for(int i = 0; i < extra_dimensions_size; ++i) {
+						// Wrap a vector of the larger tensor
+						Vec v = new Vec(in, inPos, in_shift_length);
+						Vec w = new Vec(filter, filterPos, filter_shift_length);
+
+						Tensor inTemp = new Tensor(v, in_tensor_slice);
+						Tensor filterTemp = new Tensor(w, filter_tensor_slice);
+
+						convolve(inTemp, filterTemp, out, back_prop, 1);
+						inPos += in_shift_length;
+						filterPos += filter_shift_length;
+					}
+			} else {
+				throw new RuntimeException("Something went wrong!");
+			}
+		}
 	}
 
 	/// Wraps the original convolve function to handle tensors of different dimensions

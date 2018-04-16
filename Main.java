@@ -449,6 +449,85 @@ class Main
 
 	}
 
+	public static void debugSpew2() {
+		Random r = new Random(123456);
+		NeuralNet nn = new NeuralNet(r);
+
+		nn.layers.add(new LayerConv(new int[]{4, 4}, new int[]{3, 3},
+			new int[]{4, 4}));
+		nn.layers.add(new LayerConv(new int[]{4, 4}, new int[]{3, 3, 2},
+			new int[]{4, 4, 2}));
+		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 2));
+		nn.layers.add(new LayerMaxPooling2D(4, 4, 2));
+
+		double[] w = {
+			0,							// bias #1
+
+			0.01,0.02,0.03, // filter #1
+			0.04,0.05,0.06,
+			0.07,0.08,0.09,
+
+			0.1,						// bias #2
+			0.20,						// bias #3
+
+			0.11,0.12,0.13, // filter #2
+			0.14,0.15,0.16,
+			0.17,0.18,0.19,
+
+			0.21,0.22,0.23, // filter #3
+			0.24,0.25,0.26,
+			0.27,0.28,0.29
+		};
+		nn.weights = new Vec(w);
+		nn.gradient = new Vec(nn.weights.size());
+		nn.gradient.fill(0.0);
+
+		double[] in = {
+			0,0.1,0.2,0.3,
+			0.4,0.5,0.6,0.7,
+			0.8,0.9,1,1.1,
+			1.2,1.3,1.4,1.5
+		};
+		Vec input = new Vec(in);
+
+		double[] t = {
+			0.7,0.6,
+			0.5,0.4,
+
+			0.3,0.2,
+			0.1,0
+		};
+		Vec target = new Vec(t);
+
+		nn.predict(input);
+		System.out.println("activation 0:\n" + nn.layers.get(0).activation);
+		System.out.println("activation 1:\n" + nn.layers.get(1).activation);
+		System.out.println("activation 2:\n" + nn.layers.get(2).activation);
+		System.out.println("activation 3:\n" + nn.layers.get(3).activation);
+
+		// error
+		System.out.println("output Blame: ");
+		for(int i = 0; i < target.size(); ++i) {
+			System.out.print((target.get(i) - nn.layers.get(3).activation.get(i)) + ",");
+		}
+		System.out.println("");
+
+		// backProp
+		nn.backProp(target);
+		System.out.println("blame 2: " + nn.layers.get(2).blame);
+		System.out.println("blame 1: " + nn.layers.get(1).blame);
+		System.out.println("blame 0: " + nn.layers.get(0).blame);
+
+		nn.updateGradient(input);
+		System.out.println("gradient: " + nn.gradient);
+
+		nn.refineWeights(0.01);
+		System.out.println("weights: " + nn.weights);
+
+		//Vec cd = nn.centralDifference(input);
+		//System.out.println("cd: " + cd);
+	}
+
 	public static void asgn4() {
 		/// Load data
 		Matrix features = new Matrix();
@@ -486,6 +565,8 @@ class Main
 
 	public static void main(String[] args)
 	{
+		// debugSpew();
+		// debugSpew2();
 		asgn4();
 
 	}
