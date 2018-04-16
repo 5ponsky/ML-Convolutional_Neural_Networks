@@ -450,11 +450,17 @@ class Main
 	}
 
 	public static void asgn4() {
+		/// Load data
+		Matrix features = new Matrix();
+		features.loadARFF("data/train_feat.arff");
+		Matrix labels = new Matrix();
+		labels.loadARFF("data/train_lab.arff");
 
-
+		/// Instantiate net
 		Random r = new Random(123456);
 		NeuralNet nn = new NeuralNet(r);
 
+		/// Build topology
 		nn.layers.add(new LayerConv(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
 		nn.layers.add(new LayerLeakyRectifier(8 * 8 * 4));
 		nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
@@ -464,18 +470,23 @@ class Main
 		nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
 		nn.initWeights();
 
-		//nn.train()
+		/// Indices
+		int[] indices = new int[features.rows()];
+		for(int i = 0; i < indices.length; ++i) { indices[i] = i; }
 
+		// cd grad
+		nn.cd_gradient = new Vec(nn.gradient.size());
+
+		nn.train(features, labels, indices, 1, 0.0);
 		System.out.println("Computed: " + nn.gradient);
-		//System.out.println("Central diff: " + )
+
+		System.out.println("Central diff: " + nn.cd_gradient);
 
 	}
 
 	public static void main(String[] args)
 	{
-		// testConv();
-		// testData();
-		debugSpew();
+		asgn4();
 
 	}
 }

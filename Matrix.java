@@ -153,9 +153,17 @@ public class Matrix
 					Json.StringParser sp = new Json.StringParser(line);
 					sp.advance(10);
 					sp.skipWhitespace();
-					sp.advance(1);
-					String attrName = sp.until('\'');
-					sp.advance(1);
+
+
+					/// Swap this line out for the ones below
+					String attrName = sp.untilWhitespace();
+
+					/// These lines are needed sometimes
+					//sp.advance(1);
+					//String attrName = sp.until('\'');
+					//sp.advance(1);
+
+
 					m_attr_name.add(attrName);
 					sp.skipWhitespace();
 					int valCount = 0;

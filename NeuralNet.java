@@ -13,10 +13,9 @@ public class NeuralNet extends SupervisedLearner {
   protected Vec gradient;
   protected ArrayList<Layer> layers;
 
-  // This is a temporary architecture decision;
-  // I need to be able to pause the training at any moment to test the net,
-  // But resume exactly where I left off.  I didn't choose to pass as a parameter,
-  // Because Idk if I want to change every supervised learner yet.
+  public int[] indices; // Bootstrapping indices
+
+  public Vec cd_gradient;
 
 
   String name() { return ""; }
@@ -89,7 +88,7 @@ public class NeuralNet extends SupervisedLearner {
   Vec central_difference(Vec x, Vec target) {
     double h = 0.0003;
 
-    Vec cd_gradient = new Vec(gradient.size());
+    //Vec cd_gradient = new Vec(gradient.size());
     Vec validation = new Vec(weights); // Used for validating the weights
 
     for(int i = 0; i < weights.size(); ++i) {
@@ -202,6 +201,9 @@ public class NeuralNet extends SupervisedLearner {
       predict(in);
       backProp(target);
       updateGradient(in);
+
+      // Temporary
+      central_difference(in, target);
 
       if((trainingProgress + 1) % batch_size == 0) {
         refineWeights(learning_rate * learning_scale);
