@@ -50,6 +50,21 @@ public class NeuralNet extends SupervisedLearner {
     }
   }
 
+  Vec predict(Vec in) {
+    int pos = 0;
+    for(int i = 0; i < layers.size(); ++i) {
+      Layer l = layers.get(i);
+      int weightsChunk = l.getNumberWeights();
+      Vec v = new Vec(weights, pos, weightsChunk);
+      l.activate(v, in);
+      in = l.activation;
+      pos += weightsChunk;
+    }
+
+    return (layers.get(layers.size()-1).activation);
+  }
+
+  /// Propagate blame from the output side to the input
   void backProp(Vec target) {
     Vec blame = new Vec(target.size());
     blame.add(target);
@@ -83,98 +98,6 @@ public class NeuralNet extends SupervisedLearner {
       x = new Vec(l.activation);
       pos += gradChunk;
     }
-  }
-
-  Vec central_difference(Vec x, Vec target) {
-    double h = 0.0003;
-
-    //Vec cd_gradient = new Vec(gradient.size());
-    Vec validation = new Vec(weights); // Used for validating the weights
-
-    for(int i = 0; i < weights.size(); ++i) {
-      double weight = weights.get(i);
-
-      // right side
-      weights.set(i, weight + h);
-      Vec right = predict(x);
-      double r_res = 0.0;
-      for(int j = 0; j < right.size(); ++j) {
-        r_res += ((right.get(j) - target.get(j)) * (right.get(j) - target.get(j)));
-      }
-
-      // left side
-      weights.set(i, weight - h);
-      Vec left = predict(x);
-      double l_res = 0.0;
-      for(int j = 0; j < left.size(); ++j) {
-        l_res += ((left.get(j) - target.get(j)) * (left.get(j) - target.get(j)));
-      }
-
-      double res = (l_res - r_res) / (2 * h);
-      cd_gradient.set(i, res);
-
-      weights.set(i, weight);
-
-      // Validate that the weights have returned to their original values
-      for(int j = 0; j < weights.size(); ++j) {
-        if(weights.get(j) != validation.get(j))
-          throw new RuntimeException("Error resolving weights!");
-      }
-    }
-    return cd_gradient;
-  }
-
-  /// This is for testing/estimating if the gradient is correct
-  Vec centralDifference(Vec x) {
-    Vec cd_gradient = new Vec(gradient.size());
-
-
-    // Produce a vector for the constant h
-    double h = 0.00001;
-    Vec spacing = new Vec(x.size());
-    spacing.fill(h);
-
-    // Vectors for the left and right part of the central difference
-    Vec left = new Vec(x);
-    left.addScaled(0.5, spacing);
-    Vec right = new Vec(x);
-    right.addScaled(-0.5, spacing);
-
-    // Calculate the central difference
-    int pos = 0;
-    for(int i = 0; i < layers.size(); ++i) {
-      Layer l = layers.get(i);
-      int weightsChunk = l.getNumberWeights();
-      Vec v = new Vec(cd_gradient, pos, weightsChunk);
-
-      // Compute the gradient via central difference
-      l.activate(v, left);
-      left = new Vec(l.activation);
-
-      l.activate(v, right);
-      right = new Vec(l.activation);
-
-      left.addScaled(-1, right);
-      v.add(left);
-
-      pos += weightsChunk;
-    }
-
-    return cd_gradient;
-  }
-
-  Vec predict(Vec in) {
-    int pos = 0;
-    for(int i = 0; i < layers.size(); ++i) {
-      Layer l = layers.get(i);
-      int weightsChunk = l.getNumberWeights();
-      Vec v = new Vec(weights, pos, weightsChunk);
-      l.activate(v, in);
-      in = l.activation;
-      pos += weightsChunk;
-    }
-
-    return (layers.get(layers.size()-1).activation);
   }
 
   /// Update the weights
@@ -231,6 +154,47 @@ public class NeuralNet extends SupervisedLearner {
 
       scrambleIndices(random, indices, null);
     }
+  }
+
+
+  /// Used for estimating the gradient
+  Vec central_difference(Vec x, Vec target) {
+    double h = 0.00003;
+
+    //Vec cd_gradient = new Vec(gradient.size());
+    Vec validation = new Vec(weights); // Used for validating the weights
+
+    for(int i = 0; i < weights.size(); ++i) {
+      double weight = weights.get(i);
+
+      // right side
+      weights.set(i, weight + h);
+      Vec right = predict(x);
+      double r_res = 0.0;
+      for(int j = 0; j < right.size(); ++j) {
+        r_res += ((right.get(j) - target.get(j)) * (right.get(j) - target.get(j)));
+      }
+
+      // left side
+      weights.set(i, weight - h);
+      Vec left = predict(x);
+      double l_res = 0.0;
+      for(int j = 0; j < left.size(); ++j) {
+        l_res += ((left.get(j) - target.get(j)) * (left.get(j) - target.get(j)));
+      }
+
+      double res = (l_res - r_res) / (2 * h);
+      cd_gradient.set(i, res);
+
+      weights.set(i, weight);
+
+      // Validate that the weights have returned to their original values
+      for(int j = 0; j < weights.size(); ++j) {
+        if(weights.get(j) != validation.get(j))
+          throw new RuntimeException("Error resolving weights!");
+      }
+    }
+    return cd_gradient;
   }
 
 }

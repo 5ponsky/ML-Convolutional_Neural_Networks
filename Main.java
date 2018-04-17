@@ -440,11 +440,27 @@ class Main
 		nn.updateGradient(input);
 		System.out.println("gradient: " + nn.gradient);
 
+		nn.cd_gradient = new Vec(nn.gradient.size());
+		nn.central_difference(input, target);
+		System.out.println("cd: " + nn.cd_gradient);
+
 		nn.refineWeights(0.01);
 		System.out.println("weights: " + nn.weights);
 
-		Vec cd = nn.centralDifference(input);
-		System.out.println("cd: " + cd);
+		int count = 0;
+		for(int i = 0; i < nn.gradient.size(); ++i) {
+			double difference = (nn.cd_gradient.get(i) - nn.gradient.get(i)) / nn.cd_gradient.get(i);
+			if(difference > 0.005)
+				++count;
+		}
+
+		System.out.println("Difference exceeds tolerance " + count
+			+ " times out of " + nn.gradient.size() + " elements");
+
+		//nn.cd_gradient = new Vec(nn.gradient.size());
+
+		//Vec cd = nn.central_difference(input, target);
+		//System.out.println("cd: " + cd);
 
 
 	}
@@ -543,35 +559,46 @@ class Main
 		nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
 		nn.initWeights();
 
-
-		/// Mockup data
-		Matrix features = new Matrix(1, 64);
-		for(int i = 0; i < features.row(0).size(); ++i) {
-			features.row(0).set(i, (double) i / 10.0);
+		/// Test data
+		Vec in = new Vec(64);
+		for(int i = 0; i < in.size(); ++i) {
+			in.set(i, i / 10.0);
 		}
 
-		Matrix labels = new Matrix(1, 3);
-		for(int i = 0; i < labels.row(0).size(); ++i) {
-			labels.row(0).set(i, (double) i / 10.0);
+		Vec target = new Vec(3);
+		for(int i = 0; i < target.size(); ++i) {
+			target.set(i, i / 10.0);
 		}
 
-		/// Indices
-		int[] indices = new int[features.rows()];
-		for(int i = 0; i < indices.length; ++i) { indices[i] = i; }
-
-		// cd grad
+		// create gradient for estimation
 		nn.cd_gradient = new Vec(nn.gradient.size());
 
-		nn.train(features, labels, indices, 1, 0.0);
-		System.out.println("Computed: " + nn.gradient);
+		// Calculate nn grad
+		nn.predict(in);
+		nn.backProp(target);
+		nn.updateGradient(in);
 
+		// Calculate cd gradient
+		nn.central_difference(in, target);
+
+		System.out.println("Computed: " + nn.gradient);
 		System.out.println("Central diff: " + nn.cd_gradient);
+
+		int count = 0;
+		for(int i = 0; i < nn.gradient.size(); ++i) {
+			double difference = (nn.cd_gradient.get(i) - nn.gradient.get(i)) / nn.cd_gradient.get(i);
+			if(difference > 0.005)
+				++count;
+		}
+
+		System.out.println("Difference exceeds tolerance " + count
+			+ " times out of " + nn.gradient.size() + " elements");
 
 	}
 
 	public static void main(String[] args)
 	{
-		// debugSpew();
+		//debugSpew();
 		// debugSpew2();
 		asgn4();
 

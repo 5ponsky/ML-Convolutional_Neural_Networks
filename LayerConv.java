@@ -4,48 +4,41 @@ import java.util.Random;
 class LayerConv extends Layer {
   int[] inputDims, filterDims, outputDims;
   int inputWidth, inputHeight, inputArea;
-  int filterWeights, totalBiases, filterWidth, filterHeight, filterArea;
+  int totalWeights, totalBiases, filterWidth, filterHeight, filterArea;
   int outputWidth, outputHeight, outputArea;
   Vec filter;
 
-  int getNumberWeights() { return filterWeights; }
+  int getNumberWeights() { return totalWeights; }
 
   /// Constructor
   LayerConv(int[] inputDims, int[] filterDims, int[] outputDims) {
     super(countTensorElements(inputDims), countTensorElements(outputDims));
+    // Get the total number of tensor elements
+    totalWeights = countTensorElements(filterDims);
+
     this.inputDims = inputDims;
     this.filterDims = filterDims;
     this.outputDims = outputDims;
 
-    // Calculating important properties now for input (input)
-    inputWidth = inputDims[0];
-    inputHeight = inputDims[1];
-    inputArea = inputWidth * inputHeight;
-
-    // Calculating important properties now to save computation (filter)
-    filterWidth = filterDims[0];
-    filterHeight = filterDims[1];
-    filterArea = filterWidth * filterHeight;
-
-    // Calculating output properties for use with filter
-    outputWidth = outputDims[0];
-    outputHeight = outputDims[1];
-    outputArea = outputWidth * outputHeight;
-
-    // Get the total number of tensor elements
-    filterWeights = countTensorElements(filterDims);
+    // Calculate the number of elements inside the space of the input
+    outputArea = 1;
+    filterArea = 1;
+    for(int i = 0; i < inputDims.length; ++i) {
+      filterArea *= filterDims[i];
+      outputArea *= outputDims[i];
+    }
 
     // Calculate the bias terms for the filter
-    if(filterDims.length < 3) { // Tensor has a depth of one
+    if(filterDims.length == inputDims.length) { // filter and input are same size
       totalBiases = 1;
-      filterWeights += totalBiases;
-    } else {
+      totalWeights += totalBiases;
+    } else if(filterDims.length > inputDims.length){
       // Each tensor "plane" gets a single bias value
       totalBiases = 1;
-      for(int i = 2; i < filterDims.length; ++i) {
+      for(int i = inputDims.length; i < filterDims.length; ++i) {
         totalBiases *= filterDims[i];
       }
-      filterWeights += totalBiases;
+      totalWeights += totalBiases; // biases count towards weight total
     }
   }
 
@@ -60,8 +53,8 @@ class LayerConv extends Layer {
 
   /// Initialize the filter weights
   void initWeights(Vec weights, Random random) {
-    for(int i = 0; i < filterWeights; ++i) {
-      weights.set(i, random.nextGaussian() / filterWeights);
+    for(int i = 0; i < totalWeights; ++i) {
+      weights.set(i, random.nextGaussian() / totalWeights);
     }
   }
 
@@ -71,7 +64,7 @@ class LayerConv extends Layer {
 
     // Strip the biases off of the weights
     Vec biases = new Vec(weights, 0, totalBiases);
-    Vec filters = new Vec(weights, totalBiases, filterWeights-totalBiases);
+    Vec filters = new Vec(weights, totalBiases, totalWeights-totalBiases);
     Tensor filter = new Tensor(filters, filterDims);
 
     // Call the wrapper convolution function
@@ -108,7 +101,7 @@ class LayerConv extends Layer {
     Tensor next_blame = new Tensor(nextBlame, inputDims);
 
     Vec biases = new Vec(weights, 0, totalBiases); // ignore b
-    Vec filters = new Vec(weights, totalBiases, filterWeights-totalBiases);
+    Vec filters = new Vec(weights, totalBiases, totalWeights-totalBiases);
     Tensor filter = new Tensor(filters, filterDims);
 
     Tensor.safety_convolve(prev_blame, filter, next_blame, true);

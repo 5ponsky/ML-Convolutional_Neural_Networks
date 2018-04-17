@@ -49,7 +49,8 @@ public class Vec {
 	/// This is NOT a copy constructor. It wraps the same buffer of values as v.
 	public Vec(Vec v, int begin, int length) {
 		if(v.size() < begin + length)
-			throw new IllegalArgumentException("out of bounds!");
+			throw new IllegalArgumentException("v.size() " + v.size()
+				+ " < " + begin + " + " + length + " : out of bounds!");
 		vals = v.vals;
 		start = v.start + begin;
 		len = length;
@@ -172,7 +173,8 @@ public class Vec {
 
 	public void addScaled(double scalar, Vec that) {
 		if(that.size() != this.size())
-			throw new IllegalArgumentException("mismatching sizes");
+			throw new IllegalArgumentException("that: " + that.size() + " != "
+				+ "this: " + this.size());
 		for(int i = 0; i < len; i++)
 			vals[start + i] += scalar * that.get(i);
 	}
