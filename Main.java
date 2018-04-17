@@ -529,12 +529,6 @@ class Main
 	}
 
 	public static void asgn4() {
-		/// Load data
-		Matrix features = new Matrix();
-		features.loadARFF("data/train_feat.arff");
-		Matrix labels = new Matrix();
-		labels.loadARFF("data/train_lab.arff");
-
 		/// Instantiate net
 		Random r = new Random(123456);
 		NeuralNet nn = new NeuralNet(r);
@@ -548,6 +542,18 @@ class Main
 		nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
 		nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
 		nn.initWeights();
+
+
+		/// Mockup data
+		Matrix features = new Matrix(1, 64);
+		for(int i = 0; i < features.row(0).size(); ++i) {
+			features.row(0).set(i, (double) i / 10.0);
+		}
+
+		Matrix labels = new Matrix(1, 3);
+		for(int i = 0; i < labels.row(0).size(); ++i) {
+			labels.row(0).set(i, (double) i / 10.0);
+		}
 
 		/// Indices
 		int[] indices = new int[features.rows()];

@@ -71,7 +71,6 @@ class LayerConv extends Layer {
 
     // Strip the biases off of the weights
     Vec biases = new Vec(weights, 0, totalBiases);
-    System.out.println("b: " + biases);
     Vec filters = new Vec(weights, totalBiases, filterWeights-totalBiases);
     Tensor filter = new Tensor(filters, filterDims);
 
