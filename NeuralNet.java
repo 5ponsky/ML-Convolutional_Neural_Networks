@@ -159,7 +159,7 @@ public class NeuralNet extends SupervisedLearner {
 
   /// Used for estimating the gradient
   Vec central_difference(Vec x, Vec target) {
-    double h = 0.00003;
+    double h = 0.0003;
 
     //Vec cd_gradient = new Vec(gradient.size());
     Vec validation = new Vec(weights); // Used for validating the weights
