@@ -596,11 +596,46 @@ class Main
 
 	}
 
+	public static void db() {
+		/// Instantiate net
+		Random r = new Random(123456);
+		NeuralNet nn = new NeuralNet(r);
+
+		/// Build topology
+		nn.layers.add(new LayerConv(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
+		nn.layers.add(new LayerLeakyRectifier(8 * 8 * 4));
+		//nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
+		// nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
+		// nn.layers.add(new LayerLeakyRectifier(4 * 4 * 6));
+		// nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
+		// nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
+		nn.initWeights();
+
+		/// Test data
+		Vec in = new Vec(64);
+		for(int i = 0; i < in.size(); ++i) {
+			in.set(i, i / 10.0);
+		}
+
+		Vec target = new Vec(8*8*4);
+		for(int i = 0; i < target.size(); ++i) {
+			target.set(i, i / 10.0);
+		}
+
+		// Calculate nn grad
+		nn.predict(in);
+		nn.backProp(target);
+		nn.updateGradient(in);
+
+		System.out.println("Computed: " + nn.gradient);
+	}
+
 	public static void main(String[] args)
 	{
-		//debugSpew();
+		//db();
+		debugSpew();
 		// debugSpew2();
-		asgn4();
+		// asgn4();
 
 	}
 }
