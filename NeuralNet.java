@@ -94,8 +94,12 @@ public class NeuralNet extends SupervisedLearner {
       int gradChunk = l.getNumberWeights();
       Vec v = new Vec(gradient, pos, gradChunk);
 
+      System.out.println("Layer " + i + " activation:\n" + l.activation);
+
       l.updateGradient(x, v);
       x = new Vec(l.activation);
+
+      //System.out.println("Layer " + i + ":\n" + gradient);
       pos += gradChunk;
     }
   }

@@ -179,8 +179,11 @@ class Tensor extends Vec {
 				Tensor tempFilter = new Tensor(v, tensor_slice);
 				Tensor tempOut = new Tensor(w, out_slice);
 
-
 				convolve(in, tempFilter, tempOut, back_prop, 1);
+
+				// System.out.println("in: " + in);
+				// System.out.println("filter: " + tempFilter);
+				// System.out.println("tempout: " + tempOut);
 				filterPos += shift_length;
 				outPos += out_shift;
 			}

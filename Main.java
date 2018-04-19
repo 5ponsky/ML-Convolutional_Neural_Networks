@@ -604,8 +604,8 @@ class Main
 		/// Build topology
 		nn.layers.add(new LayerConv(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
 		nn.layers.add(new LayerLeakyRectifier(8 * 8 * 4));
-		//nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
-		// nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
+		nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
+		nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
 		// nn.layers.add(new LayerLeakyRectifier(4 * 4 * 6));
 		// nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
 		// nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
@@ -617,7 +617,7 @@ class Main
 			in.set(i, i / 10.0);
 		}
 
-		Vec target = new Vec(8*8*4);
+		Vec target = new Vec(96);
 		for(int i = 0; i < target.size(); ++i) {
 			target.set(i, i / 10.0);
 		}
@@ -630,12 +630,56 @@ class Main
 		System.out.println("Computed: " + nn.gradient);
 	}
 
+	public static void tc() {
+		int[] a_dims = {4,4,4};
+		int[] b_dims = {3,3,4,6};
+		int[] c_dims = {4,4,1,6};
+
+		Vec a = new Vec(4*4*4);
+		Vec b = new Vec(3*3*4*6);
+		Vec c = new Vec(4*4*1*6);
+
+		for(int i = 0; i < a.size(); ++i) {
+			a.set(i, i);
+		}
+
+		for(int i = 0; i < b.size(); ++i) {
+			b.set(i, i);
+		}
+
+		for(int i = 0; i < c.size(); ++i) {
+			c.set(i, i);
+		}
+
+		Tensor a_t = new Tensor(a, a_dims);
+		Tensor b_t = new Tensor(b, b_dims);
+		Tensor c_t = new Tensor(c, c_dims);
+
+		Tensor.safety_convolve(a_t, b_t, c_t, false);
+
+		System.out.println(c_t);
+	}
+
+	public static void maxpool() {
+		Layer l = new LayerMaxPooling2D(8, 8, 4);
+		Vec in = new Vec(l.outputs);
+
+		for(int i = 0; i < in.size(); ++i) {
+			in.set(i, i);
+		}
+
+		l.activate(null, in);
+		System.out.println(l.activation);
+	}
+
 	public static void main(String[] args)
 	{
+		maxpool();
+		//tc();
 		//db();
-		debugSpew();
-		// debugSpew2();
-		// asgn4();
+		//debugSpew();
+	  //debugSpew2();
+		//asgn4();
 
 	}
 }

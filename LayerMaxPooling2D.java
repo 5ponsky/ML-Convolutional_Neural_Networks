@@ -13,7 +13,7 @@ class LayerMaxPooling2D extends Layer {
   int getNumberWeights() { return 0; }
 
   LayerMaxPooling2D(int width, int height, int depth) {
-    super(width * height * depth, (width * height * depth) / poolsize);
+    super(width * height * depth, ((width * height) / poolsize) * depth);
     this.width = width;
     this.height = height;
     this.depth = depth;

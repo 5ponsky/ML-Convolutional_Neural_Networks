@@ -132,7 +132,9 @@ class LayerConv extends Layer {
     // In this case the filter/gradient is the output
     Tensor out = new Tensor(m, filterDims);
 
+    System.out.println("in: " + in);
     Tensor.safety_convolve(in, kernel, out, false);
+    //System.out.println("aftere: " + out); // first row of 0 after index 8
   }
 
 
