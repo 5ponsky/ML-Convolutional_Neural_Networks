@@ -457,10 +457,10 @@ class Main
 		System.out.println("Difference exceeds tolerance " + count
 			+ " times out of " + nn.gradient.size() + " elements");
 
-		//nn.cd_gradient = new Vec(nn.gradient.size());
+		nn.cd_gradient = new Vec(nn.gradient.size());
 
-		//Vec cd = nn.central_difference(input, target);
-		//System.out.println("cd: " + cd);
+		Vec cd = nn.central_difference(input, target);
+		System.out.println("cd: " + cd);
 
 
 	}
