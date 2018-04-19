@@ -134,9 +134,6 @@ class LayerMaxPooling2D extends Layer {
       double blame_i = prevBlame.get(i);
       double b_i = maxes.get(i);
 
-      // Map the blame back into a pooling matrix
-      //int tempPos = 0;
-      //temp.set(b_i, blame_i);
       int pos = 0;
       for(int k = 0; k < pooling.rows(); ++k) {
         for(int l = 0; l < pooling.cols(); ++l) {
@@ -146,7 +143,6 @@ class LayerMaxPooling2D extends Layer {
         }
       }
 
-      // 0, 0, input, i * pooling.rows(), j * pooling.cols(), pooling.rows(), pooling.cols());
       input.copyBlock(in_row, in_col, pooling, 0, 0, pooling.rows(), pooling.cols());
       // TODO: FIx this iteration!
       in_row = i % input.rows();
@@ -160,23 +156,6 @@ class LayerMaxPooling2D extends Layer {
       Vec v = new Vec(nextBlame, pos, input.cols());
       v.add(input.row(i));
     }
-
-    // int pos = 0;
-    // int pb = 0;
-    // for(int i = 0; i < maxMap.length; ++i) {
-    //
-    //   for(int j = 0; j < maxMap[0].length; ++j) {
-    //     if(maxMap[i][j] == true) {
-    //       double blame = prevBlame.get(pb);
-    //       nextBlame.set(pos, blame);
-    //       ++pb;
-    //     }
-    //     else
-    //       nextBlame.set(pos, 0.0);
-    //
-    //     ++pos;
-    //   }
-    // }
 
     return nextBlame;
   }
