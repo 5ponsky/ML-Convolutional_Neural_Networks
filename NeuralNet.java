@@ -94,8 +94,6 @@ public class NeuralNet extends SupervisedLearner {
       int gradChunk = l.getNumberWeights();
       Vec v = new Vec(gradient, pos, gradChunk);
 
-      System.out.println("Layer " + i + " activation:\n" + l.activation);
-
       l.updateGradient(x, v);
       x = new Vec(l.activation);
 
@@ -129,9 +127,6 @@ public class NeuralNet extends SupervisedLearner {
       backProp(target);
       updateGradient(in);
 
-      // Temporary
-      //central_difference(in, target);
-
       if((trainingProgress + 1) % batch_size == 0) {
         refineWeights(learning_rate * learning_scale);
         if(momentum <= 0)
@@ -160,12 +155,52 @@ public class NeuralNet extends SupervisedLearner {
     }
   }
 
+  Vec cd(Vec x, Vec target) {
+    // using this equation
+    /*
+    (f(x + delta(x)) - f(x)) / delta(x)  -   (f(x) - f(x- delta(x)) / delta(x))
+    */
+
+    double step = 0.003;
+
+    //for(int i = 0; i < weights.size(); ++i) {
+      // compute f(x)
+      Vec f_x = predict(x);
+
+      // one step to the right
+      Vec x_right = new Vec(x);
+      for(int j = 0; j < x_right.size(); ++j) {
+        double x_j = x_right.get(j);
+        x_right.set(j, x_j + step);
+      }
+      Vec f_x_right = predict(x_right);
+
+      // one step to the left
+      Vec x_left = new Vec(x);
+      for(int j = 0; j < x_left.size(); ++j) {
+        double x_j = x_left.get(j);
+        x_left.set(j, x_j - step);
+      }
+      Vec f_x_left = predict(x_left);
+
+
+      Vec out = new Vec(f_x_left.size());
+      for(int j = 0; j < f_x_left.size(); ++j) {
+        double pos = (f_x_right.get(j) - f_x.get(j)) / step;
+        double neg = f_x.get(j) - f_x_left.get(j) / step;
+        double res = pos - neg;
+        System.out.println(res);
+      }
+
+    //}
+    return null;
+  }
+
 
   /// Used for estimating the gradient
   Vec central_difference(Vec x, Vec target) {
     double h = 0.0003;
 
-    //Vec cd_gradient = new Vec(gradient.size());
     Vec validation = new Vec(weights); // Used for validating the weights
 
     for(int i = 0; i < weights.size(); ++i) {
@@ -176,7 +211,7 @@ public class NeuralNet extends SupervisedLearner {
       Vec right = predict(x);
       double r_res = 0.0;
       for(int j = 0; j < right.size(); ++j) {
-        r_res += ((right.get(j) - target.get(j)) * (right.get(j) - target.get(j)));
+        r_res += ((target.get(j) - right.get(j)) * (target.get(j) - right.get(j)));
       }
 
       // left side
@@ -184,7 +219,7 @@ public class NeuralNet extends SupervisedLearner {
       Vec left = predict(x);
       double l_res = 0.0;
       for(int j = 0; j < left.size(); ++j) {
-        l_res += ((left.get(j) - target.get(j)) * (left.get(j) - target.get(j)));
+        l_res += ((target.get(j) - left.get(j)) * (target.get(j) - left.get(j)));
       }
 
       double res = (l_res - r_res) / (2 * h);

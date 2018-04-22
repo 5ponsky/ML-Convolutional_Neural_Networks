@@ -13,7 +13,7 @@ class LayerMaxPooling2D extends Layer {
   int getNumberWeights() { return 0; }
 
   LayerMaxPooling2D(int width, int height, int depth) {
-    super(width * height * depth, ((width * height) / poolsize) * depth);
+    super(width * height * depth, (width / pooling_dims[0]) * (height / pooling_dims[1]) * depth);
     this.width = width;
     this.height = height;
     this.depth = depth;
@@ -43,11 +43,10 @@ class LayerMaxPooling2D extends Layer {
         ++x_pos;
       }
     }
-
     // Find the max for each pooling matrix
     int pos = 0; // iterate the activation vec
-    for(int i = 0; i < pooling.rows() * depth; ++i) {
-      for(int j = 0; j < pooling.cols(); ++j) {
+    for(int i = 0; i < (input.rows() / pooling.rows()); ++i) {
+      for(int j = 0; j < (input.cols() / pooling.cols()); ++j) {
         // Copy a block into pooling for comparison
         pooling.copyBlock(0, 0, input, i * pooling.rows(), j * pooling.cols(), pooling.rows(), pooling.cols());
 
