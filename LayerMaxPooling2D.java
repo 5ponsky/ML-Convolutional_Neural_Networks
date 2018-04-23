@@ -27,7 +27,7 @@ class LayerMaxPooling2D extends Layer {
 
     // Error checking to make sure we can pool over the planar dimensions
     if((width * height) % poolsize != 0)
-      throw new IllegalArgumentException("W: " + width + " / " + poolsize + " not an integer");
+      throw new IllegalArgumentException("WxH: " + width + " * " + height + " / " + poolsize + " not an integer");
   }
 
   /// Pool over each 2-tensor

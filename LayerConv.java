@@ -68,7 +68,7 @@ class LayerConv extends Layer {
     Tensor filter = new Tensor(filters, filterDims);
 
     // Call the wrapper convolution function
-    Tensor.safety_convolve(in, filter, out, false);
+    Tensor.safety_convolve(in, filter, out, 1);
 
     // Vec to add bias to each output tensor
     Vec bias = new Vec(outputArea);
@@ -104,12 +104,14 @@ class LayerConv extends Layer {
     Vec filters = new Vec(weights, totalBiases, totalWeights-totalBiases);
     Tensor filter = new Tensor(filters, filterDims);
 
-    Tensor.safety_convolve(prev_blame, filter, next_blame, true);
+    Tensor.safety_convolve(prev_blame, filter, next_blame, -1);
 
     return nextBlame;
   }
 
   void updateGradient(Vec x, Vec gradient) {
+
+    System.out.println("Blame; " + blame);
 
     // Splite biases and m
     Vec biases = new Vec(gradient, 0, totalBiases);
@@ -126,14 +128,13 @@ class LayerConv extends Layer {
     // Wrap in the input/activation from previous layer
     Tensor in = new Tensor(x, inputDims);
 
-    // Wrap the blame output (kernel in this case)
-    Tensor kernel = new Tensor(blame, outputDims);
-
     // In this case the filter/gradient is the output
-    Tensor out = new Tensor(m, filterDims);
+    Tensor filter = new Tensor(m, filterDims);
 
-    Tensor.safety_convolve(in, kernel, out, false);
-    //System.out.println("aftere: " + out); // first row of 0 after index 8
+    // Wrap the blame output (kernel in this case)
+    Tensor out = new Tensor(blame, outputDims);
+
+    Tensor.safety_convolve(in, filter, out, 0); // 0 means updateGradient
   }
 
 

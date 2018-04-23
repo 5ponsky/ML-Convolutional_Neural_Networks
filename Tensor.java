@@ -92,7 +92,119 @@ class Tensor extends Vec {
 		return rd;
 	}
 
-	static void safety_convolve(Tensor in, Tensor filter, Tensor out, boolean back_prop) {
+	/// Provides a generic template for computing tensors of incompatible size
+	/// NOTE: Assumes two of the tensor are of the same size
+	static void safety_template(Tensor _A, Tensor _B, Tensor _C, int mode, int dims_flag) {
+		if(dims_flag < 1 || dims_flag > 4)
+			throw new IllegalArgumentException("invalid flag value ");
+		// dims_flag = 1: size(in) = size(kernel) < size(out)
+		// dims_flag = 2: size(in) < size(kernel) = size(out)
+		// dims_flag = 3: size(in) > size(kernel) = size(out)
+		// dims_flag = 4: size(in) = size(kernel) > size(out)
+
+		Tensor in, kernel, out;
+
+		// conditions
+		boolean back_prop = false;
+		if(mode == -1) {
+			back_prop = true;
+			in = _C;
+			kernel = _B;
+			out = _A;
+		} else if(mode == 0) {
+			in = _A;
+			kernel = _C;
+			out = _B;
+		} else if(mode == 1) {
+			in = _A;
+			kernel = _B;
+			out = _C;
+		}
+
+
+		/// NOTE: This function assumes in the case of forward prop, the filter is A
+
+
+		// return arrays of the spare dimensions past the _A tensor
+		int[] e_d_B = dims_difference(_A, _B);
+		int[] e_d_C = dims_difference(_A, _C);
+
+		// count the number of extra elements in the larger two arrays
+		int extra_B_elems = 1;
+		int extra_C_elems = 1;
+		for(int i = 0; i < e_d_B.length; ++i) {
+			extra_B_elems *= e_d_B[i];
+			extra_C_elems *= e_d_C[i];
+		}
+
+		// count the number of elements within the size of the _A tensor
+		// produce reduced tensor dims compatible with the _A tensor
+		int reduced_B_elems = 1;
+		int reduced_C_elems = 1;
+
+		int[] reduced_B_dims = new int[_A.dims.length];
+		int[] reduced_C_dims = new int[_A.dims.length];
+		for(int i = 0; i < _A.dims.length; ++i) {
+			reduced_B_elems *= _B[i];
+			reduced_C_elems *= _C[i];
+
+			reduced_B_dims[i] = _B[i];
+			reduced_C_dims[i] = _C[i];
+		}
+
+		// complete convolution piece by piece
+		for(int i = 0; i < extra_B_elems; ++i) {
+
+		}
+	}
+
+	/// Handles cases for the various types of conolvution
+	static void safety_convolve(Tensor in, Tensor filter, Tensor out, int mode) {
+		if(mode < -1 || mode > 1)
+			throw new IllegalArgumentException("Invalid mode!");
+		/// NOTE:
+		// mode = -1: backProp
+		// mode = 0: updateGradient
+		// mode = 1: forwardProp/activation
+
+		// dims_flag = 1: size(in) = size(kernel) < size(out)
+		// dims_flag = 2: size(in) < size(kernel) = size(out)
+		// dims_flag = 3: size(in) > size(kernel) = size(out)
+		// dims_flag = 4: size(in) = size(kernel) > size(out)
+
+		if(mode == 1) { // forward prop
+			if(filter.dims.length < in.dims.length) {
+				// size(in) > size(kernel) = size(out)
+				safety_template(in, filter, out, mode, 3);
+			} else if(in.dims.length < filter.dims.length) {
+				// size(in) < size(kernel) = size(out)
+				safety_template(in, filter, out, mode, 2);
+			} else if(in.dims.length == filter.dims.length) {
+				// regular convolution
+				convolve(in, filter, out, false, 1);
+			}
+		} else if(mode == -1) { // backProp
+			if(out.dims.length < in.dims.length) {
+				// size(in) > size(kernel) = size(out)
+				safety_template(in, filter, out, mode, 3);
+			} else if(in.dims.length < out.dims.length) {
+				// size(in) < size(kernel) = size(out)
+				safety_template(in, filter, out, mode, 2);
+			} else if(in.dims.length == out.dims.length) {
+				convolve(in, filter, out, true, 1);
+			}
+		} else if(mode == 0) { //updateGradient (remember output = kernel)
+			if(in.dims.length < out.dims.length) {
+				safety_template(in, filter, out, mode, );
+			} else if(out.dims.length < in.dims.length) {
+				safety_template(in, filter, out, mode, );
+			} else if(out.dims.length == in.dims.length) {
+				convolve(in, filter, out, false, 1);
+			}
+		}
+	}
+
+	static void safty_convolve(Tensor in, Tensor filter, Tensor out, boolean back_prop) {
 		int[] tensor_slice;
 		int extra_dimensions_size = 1;
 		int out_shift = 1;
@@ -179,6 +291,11 @@ class Tensor extends Vec {
 				Tensor tempFilter = new Tensor(v, tensor_slice);
 				Tensor tempOut = new Tensor(w, out_slice);
 
+				System.out.println("in: " + in.size());
+				System.out.println("tempF: " + filter.size());
+				System.out.println("tempO: " + out.size());
+
+				// Problem with in tensor?
 				convolve(in, tempFilter, tempOut, back_prop, 1);
 
 				// System.out.println("in: " + in);
@@ -194,7 +311,7 @@ class Tensor extends Vec {
 			else if(back_prop == true) { // backProp
 				if(in.dims.length == out.dims.length) { // regular backprop conv.
 					convolve(in, filter, out, back_prop, 1);
-				} else if(out.dims.length < in.dims.length) { // Assume in is smaller than out
+				} else if(out.dims.length < in.dims.length) { // Assume in is _differ than out
 					int[] extra_dimensions = dims_difference(in, out);
 
 					for(int i = 0; i < extra_dimensions.length; ++i) {
