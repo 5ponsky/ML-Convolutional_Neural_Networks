@@ -559,22 +559,26 @@ class Main
 		NeuralNet nn = new NeuralNet(r);
 
 		/// Build topology
-		nn.layers.add(new LayerConv(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
-		nn.layers.add(new LayerLeakyRectifier(8 * 8 * 4));
-		nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
-		nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
-		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 6));
-		nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
-		nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
+		// nn.layers.add(new LayerConv(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
+		// nn.layers.add(new LayerLeakyRectifier(8 * 8 * 4));
+		// nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
+		// nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
+		// nn.layers.add(new LayerLeakyRectifier(4 * 4 * 6));
+		// nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
+		// nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
+		nn.layers.add(new LayerConv(new int[]{4, 4}, new int[]{3, 3, 2},
+			new int[]{4, 4, 2}));
+		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 2));
+		nn.layers.add(new LayerMaxPooling2D(4, 4, 2));
 		nn.initWeights();
 
 		/// Test data
-		Vec in = new Vec(64);
+		Vec in = new Vec(16);
 		for(int i = 0; i < in.size(); ++i) {
 			in.set(i, i / 10.0);
 		}
 
-		Vec target = new Vec(3);
+		Vec target = new Vec(8);
 		for(int i = 0; i < target.size(); ++i) {
 			target.set(i, i / 10.0);
 		}
@@ -755,14 +759,55 @@ class Main
 
 	}
 
+	public static void timeseries() {
+		Random r = new Random(123456);
+		NeuralNet nn = new NeuralNet(r);
+
+		nn.layers.add(new LayerLinear(1, 101));
+		nn.layers.add(new LayerTanh(101));
+		nn.layers.add(new LayerLinear(101, 1));
+		nn.initWeights();
+
+		/// Initilizize first layer weights
+		int numWeights = nn.layers.get(0).getNumberWeights();
+		// Strip the weights
+		Vec layerOne = new Vec(nn.weights, 0, numWeights); // Strip the weights
+		// Separate the bias and populate it
+		Vec bias = new Vec(layerOne, 0, nn.layers.get(0).outputs);
+		for(int i = 0; i < bias.size(); ++i) {
+			if(i < 50)
+				bias.set(i, Math.PI);
+			else
+				bias.set(i, Math.PI / 2);
+		}
+
+		// Separate M and populate import junit.framework.TestCase;
+		Vec m = new Vec(layerOne, bias.size(), layerOne.size()-bias.size());
+		for(int i = 0; i < m.size() - 1; ++i) {
+			if(i < 50)
+				m.set(i, (i+1) * 2 * Math.PI);
+			else
+				m.set(i, (i+1) * 2 * Math.PI);
+		}
+		m.set(m.size()-1, 0.01);
+
+		/// Build the features matrix
+		Matrix features = new Matrix(255, 1);
+		for(int i = 0; i < features.rows(); ++i) {
+			features.row(i).set(0, i / 256);
+		}
+
+	}
+
 	public static void main(String[] args)
 	{
+		timeseries();
 		//maxpool();
 		//tc();
 		//db();
 		//debugSpew();
 	  //debugSpew2();
-		asgn4();
+		//asgn4();
 		//testData();
 		//testCD();
 
