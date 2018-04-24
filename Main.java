@@ -427,10 +427,6 @@ class Main
 		};
 		Vec target = new Vec(t);
 
-		nn.cd_gradient = new Vec(nn.gradient.size());
-		nn.central_difference(input, target);
-		System.out.println("cd: " + nn.cd_gradient);
-
 		// Forward Prop
 		nn.predict(input);
 		System.out.println("activation 0:\n" + nn.layers.get(0).activation);
@@ -452,6 +448,10 @@ class Main
 
 		nn.updateGradient(input);
 		System.out.println("gradient: " + nn.gradient);
+
+		nn.cd_gradient = new Vec(nn.gradient.size());
+		nn.central_difference(input, target);
+		System.out.println("cd: " + nn.cd_gradient);
 
 		int count = 0;
 		for(int i = 0; i < nn.gradient.size(); ++i) {
@@ -802,9 +802,7 @@ class Main
 	public static void testCDF() {
 		Random r = new Random(123456);
 		NeuralNet nn = new NeuralNet(r);
-		nn.layers.add(new LayerConv(
-			new int[]{3, 3}, new int[]{7, 7, 3}, new int[]{4, 4, 3}));
-		nn.layers.add(new LayerMaxPooling2D(4, 4, 3));
+		nn.layers.add(new LayerLinear(10, 10));
 		nn.initWeights();
 
 		//nn.weights.set(0, 0);
@@ -816,7 +814,7 @@ class Main
 			in.set(i, i/10.0);
 		}
 
-		Vec target = new Vec(12);
+		Vec target = new Vec(10);
 		for(int i = target.size() -1, j = 0; j < target.size(); --i, ++j) {
 			target.set(j, i/10.0);
 		}
@@ -854,11 +852,11 @@ class Main
 		//maxpool();
 		//tc();
 		//db();
-		debugSpew();
+		//debugSpew();
 	  //debugSpew2();
 		//asgn4();
 		//testData();
-		//testCD();
+		testCDF();
 
 	}
 }
