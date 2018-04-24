@@ -427,6 +427,10 @@ class Main
 		};
 		Vec target = new Vec(t);
 
+		nn.cd_gradient = new Vec(nn.gradient.size());
+		nn.central_difference(input, target);
+		System.out.println("cd: " + nn.cd_gradient);
+
 		// Forward Prop
 		nn.predict(input);
 		System.out.println("activation 0:\n" + nn.layers.get(0).activation);
@@ -449,13 +453,6 @@ class Main
 		nn.updateGradient(input);
 		System.out.println("gradient: " + nn.gradient);
 
-		nn.cd_gradient = new Vec(nn.gradient.size());
-		nn.central_difference(input, target);
-		System.out.println("cd: " + nn.cd_gradient);
-
-		nn.refineWeights(0.01);
-		System.out.println("weights: " + nn.weights);
-
 		int count = 0;
 		for(int i = 0; i < nn.gradient.size(); ++i) {
 			double difference = (nn.cd_gradient.get(i) - nn.gradient.get(i)) / nn.cd_gradient.get(i);
@@ -465,12 +462,6 @@ class Main
 
 		System.out.println("Difference exceeds tolerance " + count
 			+ " times out of " + nn.gradient.size() + " elements");
-
-		nn.cd_gradient = new Vec(nn.gradient.size());
-
-		Vec cd = nn.central_difference(input, target);
-		System.out.println("cd: " + cd);
-
 
 	}
 
@@ -863,9 +854,9 @@ class Main
 		//maxpool();
 		//tc();
 		//db();
-		//debugSpew();
+		debugSpew();
 	  //debugSpew2();
-		asgn4();
+		//asgn4();
 		//testData();
 		//testCD();
 
