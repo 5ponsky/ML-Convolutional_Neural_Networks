@@ -13,6 +13,16 @@ class LayerConv extends Layer {
   /// Constructor
   LayerConv(int[] inputDims, int[] filterDims, int[] outputDims) {
     super(countTensorElements(inputDims), countTensorElements(outputDims));
+    if(filterDims.length != outputDims.length)
+      throw new IllegalArgumentException("filterDims.length != outputDims.length");
+    if(filterDims.length > inputDims.length) {
+      for(int i = inputDims.length; i < filterDims.length; ++i) {
+        if(filterDims[i] != outputDims[i])
+          throw new IllegalArgumentException("filter and out lack same number of tensors!");
+      }
+    }
+
+
     // Get the total number of tensor elements
     totalWeights = countTensorElements(filterDims);
 
@@ -104,14 +114,12 @@ class LayerConv extends Layer {
     Vec filters = new Vec(weights, totalBiases, totalWeights-totalBiases);
     Tensor filter = new Tensor(filters, filterDims);
 
-    Tensor.safety_convolve(prev_blame, filter, next_blame, -1);
+    Tensor.safety_convolve(next_blame, filter, prev_blame, -1);
 
     return nextBlame;
   }
 
   void updateGradient(Vec x, Vec gradient) {
-
-    System.out.println("Blame; " + blame);
 
     // Splite biases and m
     Vec biases = new Vec(gradient, 0, totalBiases);

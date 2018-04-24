@@ -670,7 +670,7 @@ class Main
 		Tensor b_t = new Tensor(b, b_dims);
 		Tensor c_t = new Tensor(c, c_dims);
 
-		Tensor.safety_convolve(a_t, b_t, c_t, false);
+		Tensor.safety_convolve(a_t, b_t, c_t, -1);
 
 		System.out.println(c_t);
 	}
@@ -857,14 +857,15 @@ class Main
 
 	public static void main(String[] args)
 	{
-		testCDF();
+		//tc();
+		//testCDF();
 		//timeseries();
 		//maxpool();
 		//tc();
 		//db();
 		//debugSpew();
 	  //debugSpew2();
-		//asgn4();
+		asgn4();
 		//testData();
 		//testCD();
 

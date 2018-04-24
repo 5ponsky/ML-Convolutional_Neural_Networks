@@ -111,51 +111,192 @@ class Tensor extends Vec {
 			in = _C;
 			kernel = _B;
 			out = _A;
-		} else if(mode == 0) {
-			in = _A;
-			kernel = _C;
-			out = _B;
 		} else if(mode == 1) {
 			in = _A;
 			kernel = _B;
 			out = _C;
+		} else {
+			in = _A;
+			kernel = _C;
+			out = _B;
 		}
 
 
-		/// NOTE: This function assumes in the case of forward prop, the filter is A
+		// Size of the left is the same as the size of the right,
+		// and both are smaller than their output
+		if(dims_flag == 1) {
+			int out_extra_tensors = 1;
+			int kernel_tensor_size = 1;
+			int out_tensor_size = 1;
+			int[] out_tensor = new int[in.dims.length];
+			int[] kernel_tensor = new int[in.dims.length];
 
+			// find the reduced size of the tensor
+			for(int i = 0; i < in.dims.length; ++i) {
+				out_tensor_size *= out.dims[i];
+				kernel_tensor_size *= kernel.dims[i];
 
-		// return arrays of the spare dimensions past the _A tensor
-		int[] e_d_B = dims_difference(_A, _B);
-		int[] e_d_C = dims_difference(_A, _C);
+				out_tensor[i] = out.dims[i];
+				kernel_tensor[i] = kernel.dims[i];
+			}
 
-		// count the number of extra elements in the larger two arrays
-		int extra_B_elems = 1;
-		int extra_C_elems = 1;
-		for(int i = 0; i < e_d_B.length; ++i) {
-			extra_B_elems *= e_d_B[i];
-			extra_C_elems *= e_d_C[i];
+			// Find how  many extra tensors there are of the output
+			for(int i = in.dims.length; i < out.dims.length; ++i) {
+				out_extra_tensors *= out.dims[i];
+			}
+
+			/// Convolve either forward or backward based on mode
+			if(back_prop) {
+				int oPos = out.size();
+				int kPos = kernel.size();
+
+				for(int i = out_extra_tensors-1; i >= 0; --i) {
+					oPos -= out_tensor_size;
+					kPos -= kernel_tensor_size;
+
+					Vec v = new Vec(out, oPos, out_tensor_size);
+					Vec w = new Vec(kernel, kPos, kernel_tensor_size);
+
+					Tensor o = new Tensor(v, out_tensor);
+					Tensor k = new Tensor(w, kernel_tensor);
+					convolve(in, k, o, back_prop, 1);
+				}
+
+				//System.out.println("out: " + out);
+				//System.out.println("A: " + _C);
+				_C = out;
+			} else if(!back_prop) {
+				int oPos = 0;
+				int kPos = 0;
+				for(int i = 0; i < out_extra_tensors; ++i) {
+					Vec v = new Vec(out, oPos, out_tensor_size);
+					Vec w = new Vec(kernel, kPos, kernel_tensor_size);
+
+					Tensor o = new Tensor(v, out_tensor);
+					Tensor k = new Tensor(w, kernel_tensor);
+					convolve(in, kernel, o, back_prop, 1);
+
+					oPos += out_tensor_size;
+					kPos += kernel_tensor_size;
+				}
+			}
 		}
 
-		// count the number of elements within the size of the _A tensor
-		// produce reduced tensor dims compatible with the _A tensor
-		int reduced_B_elems = 1;
-		int reduced_C_elems = 1;
+		// The size of the left is smaller than the size of the right,
+		// the right and the output are the same dimensions
+		if(dims_flag == 2) {
+			// backprop cannot happen here
 
-		int[] reduced_B_dims = new int[_A.dims.length];
-		int[] reduced_C_dims = new int[_A.dims.length];
-		for(int i = 0; i < _A.dims.length; ++i) {
-			reduced_B_elems *= _B[i];
-			reduced_C_elems *= _C[i];
+			int kernel_extra_tensors = 1; // same size as out
+			int kernel_tensor_size = 1;
+			int out_tensor_size = 1;
+			int[] kernel_tensor = new int[in.dims.length];
+			int[] out_tensor = new int[in.dims.length];
 
-			reduced_B_dims[i] = _B[i];
-			reduced_C_dims[i] = _C[i];
+			for(int i = 0; i < in.dims.length; ++i) {
+				kernel_tensor_size *= kernel.dims[i];
+				out_tensor_size *= out.dims[i];
+
+				kernel_tensor[i] = kernel.dims[i];
+				out_tensor[i] = out.dims[i];
+			}
+
+			for(int i = in.dims.length; i < kernel.dims.length; ++i) {
+				kernel_extra_tensors *= kernel.dims[i];
+			}
+
+			int kPos = 0;
+			int oPos = 0;
+			for(int i = 0; i < kernel_extra_tensors; ++i) {
+				Vec v = new Vec(kernel, kPos, kernel_tensor_size);
+				Vec w = new Vec(out, oPos, out_tensor_size);
+
+				Tensor k = new Tensor(v, kernel_tensor);
+				Tensor o = new Tensor(w, out_tensor);
+
+				convolve(in, k, o, back_prop, 1);
+				kPos += kernel_tensor_size;
+				oPos += out_tensor_size;
+			}
 		}
 
-		// complete convolution piece by piece
-		for(int i = 0; i < extra_B_elems; ++i) {
+		// if the left is greater than the right,
+		// and the right and out are the same size
+		if(dims_flag == 3) {
+			int in_extra_tensors = 1;
+			int in_tensor_size = 1;
+			int[] in_tensor = new int[kernel.dims.length];
 
+			for(int i = 0; i < kernel.dims.length; ++i) {
+				in_tensor_size *= in.dims[i];
+				in_tensor[i] = in.dims[i];
+			}
+
+			for(int i = kernel.dims.length; i < in.dims.length; ++i) {
+				in_extra_tensors *= in.dims[i];
+			}
+
+			int iPos = 0;
+			for(int i = 0; i < in_extra_tensors; ++i) {
+				Vec v = new Vec(in, iPos, in_tensor_size);
+				Tensor input = new Tensor(v, in_tensor);
+
+				convolve(input, kernel, out, back_prop, 1);
+				iPos += in_tensor_size;
+			}
 		}
+
+		// The left and the right are the same size
+		// and they are both larger than the out
+		if(dims_flag == 4) {
+			int kernel_extra_tensors = 1;
+			int kernel_tensor_size = 1;
+			int in_tensor_size = 1;
+			int[] in_tensor = new int[out.dims.length];
+			int[] kernel_tensor = new int[out.dims.length];
+
+			for(int i = 0; i < out.dims.length; ++i) {
+				in_tensor_size *= in.dims[i];
+				kernel_tensor_size *= kernel.dims[i];
+
+				in_tensor[i] = in.dims[i];
+				kernel_tensor[i] = kernel.dims[i];
+			}
+
+			for(int i = out.dims.length; i < in.dims.length; ++i) {
+				kernel_extra_tensors *= kernel.dims[i];
+			}
+
+			if(back_prop) {
+				int iPos = in.size();
+				int kPos = kernel.size();
+				for(int i = kernel_extra_tensors-1; i >= 0; --i) {
+					iPos -= in_tensor_size;
+					kPos -= kernel_tensor_size;
+
+					Vec v = new Vec(in, iPos, in_tensor_size);
+					Vec w = new Vec(kernel, kPos, kernel_tensor_size);
+
+					Tensor input = new Tensor(v, in_tensor);
+					Tensor k = new Tensor(w, kernel_tensor);
+					convolve(input, k, out, back_prop, 1);
+				}
+			} else {
+				int iPos = 0;
+				int kPos = 0;
+				for(int i = 0; i < kernel_extra_tensors; ++i) {
+					Vec v = new Vec(in, iPos, in_tensor_size);
+					Vec w = new Vec(kernel, kPos, kernel_tensor_size);
+
+					Tensor input = new Tensor(v, in_tensor);
+					Tensor k = new Tensor(w, kernel_tensor);
+					convolve(input, k, out, back_prop, 1);
+					iPos += in_tensor_size;
+					kPos += kernel_tensor_size;
+				}
+			}
+		}
+
 	}
 
 	/// Handles cases for the various types of conolvution
@@ -167,17 +308,20 @@ class Tensor extends Vec {
 		// mode = 0: updateGradient
 		// mode = 1: forwardProp/activation
 
-		// dims_flag = 1: size(in) = size(kernel) < size(out)
-		// dims_flag = 2: size(in) < size(kernel) = size(out)
-		// dims_flag = 3: size(in) > size(kernel) = size(out)
-		// dims_flag = 4: size(in) = size(kernel) > size(out)
+		// Where A * B = C
+		// dims_flag = 1: size(A) = size(B) < size(C)
+		// dims_flag = 2: size(A) < size(B) = size(C)
+		// dims_flag = 3: size(A) > size(B) = size(C)
+		// dims_flag = 4: size(A) = size(B) > size(C)
 
 		if(mode == 1) { // forward prop
 			if(filter.dims.length < in.dims.length) {
-				// size(in) > size(kernel) = size(out)
+				// in * filter = out
+				// #in > #filter = #out
 				safety_template(in, filter, out, mode, 3);
 			} else if(in.dims.length < filter.dims.length) {
-				// size(in) < size(kernel) = size(out)
+				// in * filter = out
+				// #in < #filter = #out
 				safety_template(in, filter, out, mode, 2);
 			} else if(in.dims.length == filter.dims.length) {
 				// regular convolution
@@ -185,21 +329,27 @@ class Tensor extends Vec {
 			}
 		} else if(mode == -1) { // backProp
 			if(out.dims.length < in.dims.length) {
-				// size(in) > size(kernel) = size(out)
-				safety_template(in, filter, out, mode, 3);
+				// out * filter = in
+				// #out = #filter < #in
+				safety_template(in, filter, out, mode, 1);
 			} else if(in.dims.length < out.dims.length) {
-				// size(in) < size(kernel) = size(out)
-				safety_template(in, filter, out, mode, 2);
+				// out * filter = in
+				// #out = #filter > #in
+				safety_template(in, filter, out, mode, 4);
 			} else if(in.dims.length == out.dims.length) {
-				convolve(in, filter, out, true, 1);
+				convolve(out, filter, in, true, 1);
 			}
 		} else if(mode == 0) { //updateGradient (remember output = kernel)
 			if(in.dims.length < out.dims.length) {
-				safety_template(in, filter, out, mode, );
+				// in * out = filter
+				// #in < #out = #filter
+				safety_template(in, filter, out, mode, 2);
 			} else if(out.dims.length < in.dims.length) {
-				safety_template(in, filter, out, mode, );
+				// in * out = filter
+				// #in > #out = #filter
+				safety_template(in, filter, out, mode, 3);
 			} else if(out.dims.length == in.dims.length) {
-				convolve(in, filter, out, false, 1);
+				convolve(in, out, filter, false, 1);
 			}
 		}
 	}
