@@ -155,51 +155,9 @@ public class NeuralNet extends SupervisedLearner {
     }
   }
 
-  Vec cd(Vec x, Vec target) {
-    // using this equation
-    /*
-    (f(x + delta(x)) - f(x)) / delta(x)  -   (f(x) - f(x- delta(x)) / delta(x))
-    */
-
-    double step = 0.003;
-
-    //for(int i = 0; i < weights.size(); ++i) {
-      // compute f(x)
-      Vec f_x = predict(x);
-
-      // one step to the right
-      Vec x_right = new Vec(x);
-      for(int j = 0; j < x_right.size(); ++j) {
-        double x_j = x_right.get(j);
-        x_right.set(j, x_j + step);
-      }
-      Vec f_x_right = predict(x_right);
-
-      // one step to the left
-      Vec x_left = new Vec(x);
-      for(int j = 0; j < x_left.size(); ++j) {
-        double x_j = x_left.get(j);
-        x_left.set(j, x_j - step);
-      }
-      Vec f_x_left = predict(x_left);
-
-
-      Vec out = new Vec(f_x_left.size());
-      for(int j = 0; j < f_x_left.size(); ++j) {
-        double pos = (f_x_right.get(j) - f_x.get(j)) / step;
-        double neg = f_x.get(j) - f_x_left.get(j) / step;
-        double res = pos - neg;
-        System.out.println(res);
-      }
-
-    //}
-    return null;
-  }
-
-
   /// Used for estimating the gradient
   Vec central_difference(Vec x, Vec target) {
-    double h = 0.03;
+    double h = 0.0001;
 
     Vec validation = new Vec(weights); // Used for validating the weights
 
@@ -208,21 +166,21 @@ public class NeuralNet extends SupervisedLearner {
 
       // right side
       weights.set(i, weight + h);
-      Vec right = predict(x);
+      Vec right = new Vec(predict(x));
       double r_res = 0.0;
       for(int j = 0; j < right.size(); ++j) {
-        r_res += target.get(j) - right.get(j);
+        r_res += (target.get(j) - right.get(j)) * (target.get(j) - right.get(j));
       }
 
       // left side
       weights.set(i, weight - h);
-      Vec left = predict(x);
+      Vec left = new Vec(predict(x));
       double l_res = 0.0;
       for(int j = 0; j < left.size(); ++j) {
-        l_res += target.get(j) - left.get(j);
+        l_res += (target.get(j) - left.get(j)) * (target.get(j) - left.get(j));
       }
 
-      double res = (r_res - l_res) / (2 * h);
+      double res = (l_res - r_res) / (2 * h);
       cd_gradient.set(i, res);
 
       weights.set(i, weight);
@@ -236,26 +194,79 @@ public class NeuralNet extends SupervisedLearner {
     return cd_gradient;
   }
 
-  Vec c_d(Vec x, Vec target) {
-    double h = 0.000003;
-    Vec weights_copy = new Vec(weights);
+  void finite_difference(Vec x, Vec target) {
+    double h = 1e-6;
+    double pred_diff = 1.0;
 
-    /// Calculate gradient with respect to one weight
-
-    for(int i = 0; i < weights_copy.size(); ++i) {
+    /// Calculate gradient with finite difference
+    Matrix measured = new Matrix(target.size(), weights.size());
+    for(int i = 0; i < weights.size(); ++i) {
       double weight = weights.get(i);
 
       // Move a weight a little to the left and calculate the output
       weights.set(i, weight + h);
-      Vec pred_pos = predict(x);
+      Vec pred_pos = new Vec(predict(x));
 
       // Move a weight a little to the right and calculate the output
       weights.set(i, weight - h);
-      Vec pred_neg = predict(x);
+      Vec pred_neg = new Vec(predict(x));
 
+      // put the weight back
+      weights.set(i, weight);
 
+      // for each adjusted weight, push the finite difference result into a column
+      // each column has the difference for a single adjusted weight
+      for(int j = 0; j < target.size(); ++j) {
+        double result = (pred_pos.get(j) - pred_neg.get(j)) / (2 * h);
+        measured.row(j).set(i, result);
+      }
     }
-    return new Vec(1);
+
+    /// Calulate difference using backprop
+    Matrix computed = new Matrix(target.size(), weights.size());
+    Vec pred = new Vec(predict(x));
+    for(int i = 0; i < target.size(); ++i) {
+      double pred_i = pred.get(i);
+      pred.set(i, pred_i + pred_diff);
+      backProp(pred);
+      pred.set(i, pred_i);
+
+      computed.row(i).fill(0.0); // create a gradient
+      this.gradient = computed.row(i); // give the NN this gradient row
+      updateGradient(x);
+    }
+
+
+    System.out.println("measured:\n" + measured + "\n--------------------------------------");
+    System.out.println("computed:\n" + computed + "\n--------------------------------------");
+
+    /// Check results
+    int count = 0;
+    double sum = 0.0;
+    double sum_of_squares = 0.0;
+    for(int i = 0; i < target.size(); ++i) {
+      for(int j = 0; j < weights.size(); ++j) {
+        if(Math.abs(measured.row(i).get(j) - computed.row(i).get(j)) > 1e-5) {
+          //System.out.println("Mismatch at (i, j): (" + i + ", " + j + ")");
+          double err = Math.abs(measured.row(i).get(j) - computed.row(i).get(j));
+          throw new RuntimeException("dist(" + measured.row(i).get(j) + ", " + computed.row(i).get(j)
+            + ") = " + err + "is too large!");
+        } else {
+          //System.out.println("match at (i, j): (" + i + ", " + j + ")");
+        }
+
+        sum += computed.row(i).get(j);
+        sum_of_squares += (computed.row(i).get(j) * computed.row(i).get(j));
+      }
+    }
+
+    double ex = sum / (target.size() * weights.size());
+    double exx = sum_of_squares / (target.size() * weights.size());
+    if(Math.sqrt(exx - ex * ex) < 0.01)
+      throw new RuntimeException("not enough deviation");
+
+    System.out.println("If the test fails at any point, an exception would have been thrown");
+    System.out.println("The printing of this message indicates that the test has passed");
   }
 
 }

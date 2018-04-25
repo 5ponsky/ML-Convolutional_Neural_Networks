@@ -69,6 +69,7 @@ class LayerConv extends Layer {
   }
 
   void activate(Vec weights, Vec x) {
+    activation.fill(0.0);
     Tensor in = new Tensor(x, inputDims);
     Tensor out = new Tensor(activation, outputDims);
 
@@ -80,21 +81,20 @@ class LayerConv extends Layer {
     // Call the wrapper convolution function
     Tensor.safety_convolve(in, filter, out, 1);
 
-    // Vec to add bias to each output tensor
-    Vec bias = new Vec(outputArea);
-
     int biasPos = 0;
     int outputPos = 0;
     for(int i = 0; i < biases.size(); ++i) {
       // fill the bias vector with a bias value
       double b = biases.get(i);
-      bias.fill(b);
 
-      // Get a 2-tensor from the output
-      Vec o = new Vec(out, outputPos, outputArea);
+      // Get a tensor from the output
+      Vec o = new Vec(activation, outputPos, outputArea);
 
       // add the bias value to the corrseponding 2-tensor
-      o.add(bias);
+      for(int j = 0; j < outputArea; ++j) {
+        double val = o.get(j);
+        o.set(j, val + b);
+      }
 
       ++biasPos;
       outputPos += outputArea;

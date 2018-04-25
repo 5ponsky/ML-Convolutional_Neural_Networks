@@ -74,8 +74,8 @@ class LayerMaxPooling2D extends Layer {
   }
 
   Vec backProp(Vec weights, Vec prevBlame) {
-    //blame.fill(0.0);
-    //blame.add(prevBlame);
+    blame.fill(0.0);
+    blame.add(prevBlame);
 
     // re-use the input matrix from activation, for backpropping blame
     input.fill(0.0);

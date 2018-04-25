@@ -430,38 +430,40 @@ class Main
 		// Forward Prop
 		nn.predict(input);
 		System.out.println("activation 0:\n" + nn.layers.get(0).activation);
-		System.out.println("activation 1:\n" + nn.layers.get(1).activation);
-		System.out.println("activation 2:\n" + nn.layers.get(2).activation);
-
-		// error
-		System.out.println("output Blame: ");
-		for(int i = 0; i < target.size(); ++i) {
-			System.out.print((target.get(i) - nn.layers.get(2).activation.get(i)) + ",");
-		}
-		System.out.println("");
-
-		// backProp
-		nn.backProp(target);
-		System.out.println("blame 2: " + nn.layers.get(2).blame);
-		System.out.println("blame 1: " + nn.layers.get(1).blame);
-		System.out.println("blame 0: " + nn.layers.get(0).blame);
-
-		nn.updateGradient(input);
-		System.out.println("gradient: " + nn.gradient);
-
-		nn.cd_gradient = new Vec(nn.gradient.size());
-		nn.central_difference(input, target);
-		System.out.println("cd: " + nn.cd_gradient);
-
-		int count = 0;
-		for(int i = 0; i < nn.gradient.size(); ++i) {
-			double difference = (nn.cd_gradient.get(i) - nn.gradient.get(i)) / nn.cd_gradient.get(i);
-			if(difference > 0.005)
-				++count;
-		}
-
-		System.out.println("Difference exceeds tolerance " + count
-			+ " times out of " + nn.gradient.size() + " elements");
+		nn.predict(input);
+		System.out.println("activation 0:\n" + nn.layers.get(0).activation);
+		// System.out.println("activation 1:\n" + nn.layers.get(1).activation);
+		// System.out.println("activation 2:\n" + nn.layers.get(2).activation);
+		//
+		// // error
+		// System.out.println("output Blame: ");
+		// for(int i = 0; i < target.size(); ++i) {
+		// 	System.out.print((target.get(i) - nn.layers.get(2).activation.get(i)) + ",");
+		// }
+		// System.out.println("");
+		//
+		// // backProp
+		// nn.backProp(target);
+		// System.out.println("blame 2: " + nn.layers.get(2).blame);
+		// System.out.println("blame 1: " + nn.layers.get(1).blame);
+		// System.out.println("blame 0: " + nn.layers.get(0).blame);
+		//
+		// nn.updateGradient(input);
+		// System.out.println("gradient: " + nn.gradient);
+		//
+		// nn.cd_gradient = new Vec(nn.gradient.size());
+		// nn.central_difference(input, target);
+		// System.out.println("cd: " + nn.cd_gradient);
+		//
+		// int count = 0;
+		// for(int i = 0; i < nn.gradient.size(); ++i) {
+		// 	double difference = (nn.cd_gradient.get(i) - nn.gradient.get(i)) / nn.cd_gradient.get(i);
+		// 	if(difference > 0.005)
+		// 		++count;
+		// }
+		//
+		// System.out.println("Difference exceeds tolerance " + count
+		// 	+ " times out of " + nn.gradient.size() + " elements");
 
 	}
 
@@ -550,55 +552,68 @@ class Main
 		NeuralNet nn = new NeuralNet(r);
 
 		/// Build topology
-		// nn.layers.add(new LayerConv(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
-		// nn.layers.add(new LayerLeakyRectifier(8 * 8 * 4));
-		// nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
-		// nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
-		// nn.layers.add(new LayerLeakyRectifier(4 * 4 * 6));
-		// nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
-		// nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
-		nn.layers.add(new LayerConv(new int[]{4, 4}, new int[]{3, 3, 2},
-			new int[]{4, 4, 2}));
-		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 2));
-		nn.layers.add(new LayerMaxPooling2D(4, 4, 2));
+		nn.layers.add(new LayerConv(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
+		nn.layers.add(new LayerLeakyRectifier(8 * 8 * 4));
+		nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
+		nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
+		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 6));
+		nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
+		nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
 		nn.initWeights();
 
 		/// Test data
-		Vec in = new Vec(16);
+		int inSize = nn.layers.get(0).inputs;
+		Vec in = new Vec(inSize);
 		for(int i = 0; i < in.size(); ++i) {
-			in.set(i, i / 10.0);
+			in.set(i, i / 100.0);
 		}
 
-		Vec target = new Vec(8);
+		int size = nn.layers.size();
+		int outSize = nn.layers.get(size-1).outputs;
+		Vec target = new Vec(outSize);
 		for(int i = 0; i < target.size(); ++i) {
 			target.set(i, i / 10.0);
 		}
 
+		nn.finite_difference(in, target);
+
 		// create gradient for estimation
-		nn.cd_gradient = new Vec(nn.gradient.size());
-
+		// nn.cd_gradient = new Vec(nn.gradient.size());
+		//
 		// Calculate nn grad
-		nn.predict(in);
-		nn.backProp(target);
-		nn.updateGradient(in);
 
-		// Calculate cd gradient
-		nn.central_difference(in, target);
+		// for(int i = 0; i < 50; ++i) {
+		// 	System.out.println("prediction: " + nn.predict(in));
+		//
+		// 	nn.backProp(target);
+		// 	nn.updateGradient(in);
+		//
+		// 	System.out.println("nn.gradient: " + nn.gradient);
+		//
+		// 	nn.refineWeights(0.2);
+		// 	nn.gradient.fill(0.0);
+		// 	System.out.println("weights after refine: " + nn.weights);
+		// }
 
-		System.out.println("Computed: " + nn.gradient);
-		System.out.println("Central diff: " + nn.cd_gradient);
 
-		double tolerance = 0.005;
-		int count = 0;
-		for(int i = 0; i < nn.gradient.size(); ++i) {
-			double difference = (nn.cd_gradient.get(i) - nn.gradient.get(i)) / nn.cd_gradient.get(i);
-			if(difference > tolerance)
-				++count;
-		}
-
-		System.out.println("Difference exceeds tolerance (" + tolerance +  ") " + count
-			+ " times out of " + nn.gradient.size() + " elements");
-		System.out.println("--------------------------------");
+		//
+		// // Calculate cd gradient
+		// nn.central_difference(in, target);
+		//
+		// System.out.println("Computed: " + nn.gradient);
+		// System.out.println("Central diff: " + nn.cd_gradient);
+		//
+		// double tolerance = 0.005;
+		// int count = 0;
+		// for(int i = 0; i < nn.gradient.size(); ++i) {
+		// 	double difference = (nn.cd_gradient.get(i) - nn.gradient.get(i)) / nn.cd_gradient.get(i);
+		// 	if(difference > tolerance)
+		// 		++count;
+		// }
+		//
+		// System.out.println("Difference exceeds tolerance (" + tolerance +  ") " + count
+		// 	+ " times out of " + nn.gradient.size() + " elements");
+		// System.out.println("--------------------------------");
 
 	}
 
@@ -611,10 +626,10 @@ class Main
 		nn.layers.add(new LayerConv(new int[]{8, 8}, new int[]{5, 5, 4}, new int[]{8, 8, 4}));
 		nn.layers.add(new LayerLeakyRectifier(8 * 8 * 4));
 		nn.layers.add(new LayerMaxPooling2D(8, 8, 4));
-		//nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
-		//nn.layers.add(new LayerLeakyRectifier(4 * 4 * 6));
-		//nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
-		//nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
+		nn.layers.add(new LayerConv(new int[]{4, 4, 4}, new int[]{3, 3, 4, 6}, new int[]{4, 4, 1, 6}));
+		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 6));
+		nn.layers.add(new LayerMaxPooling2D(4, 4, 1 * 6));
+		nn.layers.add(new LayerLinear(2 * 2 * 6, 3));
 		nn.initWeights();
 
 		/// Test data
@@ -799,11 +814,60 @@ class Main
 
 	}
 
+	public static void debugTest() {
+		Random r = new Random(123456);
+		NeuralNet nn = new NeuralNet(r);
+		nn.layers.add(new LayerConv(new int[]{4, 4}, new int[]{3, 3, 2},
+			new int[]{4, 4, 2}));
+		nn.layers.add(new LayerLeakyRectifier(4 * 4 * 2));
+		nn.layers.add(new LayerMaxPooling2D(4, 4, 2));
+		// nn.layers.add(new LayerLinear(16, 8));
+		// nn.layers.add(new LayerTanh(8));
+		nn.initWeights();
+
+
+		Vec input = new Vec(16);
+		Vec target = new Vec(8);
+
+		for(int i = 0; i < input.size(); ++i) {
+			input.set(i, r.nextGaussian() / input.size());
+		}
+
+		for(int i = 0; i < target.size(); ++i) {
+			target.set(i, r.nextGaussian() / target.size());
+		}
+
+		// Forward Prop
+		nn.predict(input);
+		System.out.println("activation 0:\n" + nn.layers.get(0).activation);
+		//
+		// // error
+		// System.out.println("output Blame: ");
+		// for(int i = 0; i < target.size(); ++i) {
+		// 	System.out.print((target.get(i) - nn.layers.get(2).activation.get(i)) + ",");
+		// }
+		// System.out.println("");
+		//
+		// // backProp
+		// nn.backProp(target);
+		// System.out.println("blame 2: " + nn.layers.get(2).blame);
+		// System.out.println("blame 1: " + nn.layers.get(1).blame);
+		// System.out.println("blame 0: " + nn.layers.get(0).blame);
+		//
+		// nn.updateGradient(input);
+		// System.out.println("gradient: " + nn.gradient);
+	}
+
 	public static void testCDF() {
 		Random r = new Random(123456);
 		NeuralNet nn = new NeuralNet(r);
-		nn.layers.add(new LayerLinear(10, 10));
+		nn.layers.add(new LayerLinear(1, 3));
+		nn.layers.add(new LayerTanh(3));
+		nn.layers.add(new LayerLinear(3, 2));
 		nn.initWeights();
+		//nn.weights.set(1, 3);
+		//nn.weights.set(0, 0);
+		System.out.println("weights; " + nn.weights);
 
 		//nn.weights.set(0, 0);
 		//nn.weights.set(1, 1);
@@ -811,36 +875,40 @@ class Main
 
 		Vec in = new Vec(nn.layers.get(0).inputs);
 		for(int i = 0; i < in.size(); ++i) {
-			in.set(i, i/10.0);
+			in.set(i, i /10.0);
 		}
 
-		Vec target = new Vec(10);
-		for(int i = target.size() -1, j = 0; j < target.size(); --i, ++j) {
-			target.set(j, i/10.0);
+		int size = nn.layers.size();
+		int outSize = nn.layers.get(size-1).outputs;
+		Vec target = new Vec(outSize);
+		for(int i = 0; i < target.size(); ++i) {
+			target.set(i, 10);
 		}
 
-		System.out.println("target: " + target);
-		System.out.println("init weights: " + nn.weights);
+		nn.finite_difference(in, target);
 
-		nn.cd_gradient = new Vec(nn.gradient);
+		// System.out.println("prediction: " + nn.predict(in));
+		// nn.backProp(target);
+		// nn.updateGradient(in);
+		//
+		// System.out.println("nn.gradient: " + nn.gradient);
 
-		nn.predict(in);
-		nn.backProp(target);
-		nn.updateGradient(in);
 
-		System.out.println("afterBackprop: " + nn.weights);
-		nn.central_difference(in, target);
-		System.out.println("after cd: " + nn.weights);
-
-		int count = 0;
-		for(int i = 0; i < nn.gradient.size(); ++i) {
-			double difference = (nn.cd_gradient.get(i) - nn.gradient.get(i)) / nn.cd_gradient.get(i);
-			if(difference > 0.005)
-				++count;
-		}
-
-		System.out.println("Difference exceeds tolerance " + count
-			+ " times out of " + nn.gradient.size() + " elements");
+		// System.out.println("in: " + in);
+		// System.out.println("target: " + target);
+		//
+		// for(int i = 0; i < 10; ++i) {
+		// 	System.out.println("prediction: " + nn.predict(in));
+		//
+		// 	nn.backProp(target);
+		// 	nn.updateGradient(in);
+		//
+		// 	System.out.println("nn.gradient: " + nn.gradient);
+		//
+		// 	nn.refineWeights(0.2);
+		// 	nn.gradient.fill(0.0);
+		// 	System.out.println("weights after refine: " + nn.weights);
+		// }
 
 	}
 
@@ -857,6 +925,8 @@ class Main
 		asgn4();
 		//testData();
 		//testCDF();
+
+		//debugTest();
 
 	}
 }

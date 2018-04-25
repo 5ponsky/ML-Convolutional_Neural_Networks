@@ -11,7 +11,7 @@ public class LayerLinear extends Layer {
   }
 
   void initWeights(Vec weights, Random random) {
-    for(int i = outputs; i < weights.size(); ++i) {
+    for(int i = 0; i < weights.size(); ++i) {
       weights.set(i, (Math.max(0.03, (1.0 / inputs)) * random.nextGaussian()));
     }
   }
