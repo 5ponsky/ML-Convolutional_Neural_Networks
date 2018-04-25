@@ -854,9 +854,9 @@ class Main
 		//db();
 		//debugSpew();
 	  //debugSpew2();
-		//asgn4();
+		asgn4();
 		//testData();
-		testCDF();
+		//testCDF();
 
 	}
 }

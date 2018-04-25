@@ -199,7 +199,7 @@ public class NeuralNet extends SupervisedLearner {
 
   /// Used for estimating the gradient
   Vec central_difference(Vec x, Vec target) {
-    double h = 0.0003;
+    double h = 0.03;
 
     Vec validation = new Vec(weights); // Used for validating the weights
 
@@ -211,7 +211,7 @@ public class NeuralNet extends SupervisedLearner {
       Vec right = predict(x);
       double r_res = 0.0;
       for(int j = 0; j < right.size(); ++j) {
-        r_res += ((target.get(j) - right.get(j)) * (target.get(j) - right.get(j)));
+        r_res += target.get(j) - right.get(j);
       }
 
       // left side
@@ -219,10 +219,10 @@ public class NeuralNet extends SupervisedLearner {
       Vec left = predict(x);
       double l_res = 0.0;
       for(int j = 0; j < left.size(); ++j) {
-        l_res += ((target.get(j) - left.get(j)) * (target.get(j) - left.get(j)));
+        l_res += target.get(j) - left.get(j);
       }
 
-      double res = (l_res - r_res) / (2 * h);
+      double res = (r_res - l_res) / (2 * h);
       cd_gradient.set(i, res);
 
       weights.set(i, weight);
@@ -234,6 +234,28 @@ public class NeuralNet extends SupervisedLearner {
       }
     }
     return cd_gradient;
+  }
+
+  Vec c_d(Vec x, Vec target) {
+    double h = 0.000003;
+    Vec weights_copy = new Vec(weights);
+
+    /// Calculate gradient with respect to one weight
+
+    for(int i = 0; i < weights_copy.size(); ++i) {
+      double weight = weights.get(i);
+
+      // Move a weight a little to the left and calculate the output
+      weights.set(i, weight + h);
+      Vec pred_pos = predict(x);
+
+      // Move a weight a little to the right and calculate the output
+      weights.set(i, weight - h);
+      Vec pred_neg = predict(x);
+
+
+    }
+    return new Vec(1);
   }
 
 }
